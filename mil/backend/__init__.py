@@ -1,0 +1,13 @@
+"""Backend protocol."""
+
+from __future__ import annotations
+
+from typing import Any, Protocol, runtime_checkable
+
+
+@runtime_checkable
+class Backend(Protocol):
+    def log(self, record: dict) -> None: ...
+    def log_artifact(self, obj: Any, name: str, content_hash: str) -> str: ...
+    def get_artifact(self, ref: str) -> Any: ...
+    def recent_runs(self, n: int) -> list[dict]: ...

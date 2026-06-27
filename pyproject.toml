@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mil"
+version = "0.1.0"
+description = "Mech Interp Lab: IPython capture and lightweight mechanistic interpretability tools"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "ipython>=8",
+    "diskcache",
+    "numpy",
+]
+
+[project.optional-dependencies]
+sae = ["sae-lens"]
+viz = ["circuitsvis", "plotly"]
+wandb = ["wandb"]
+nnsight = ["nnsight"]
+dev = ["pytest", "ruff", "torch"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: tests that load real model dependencies",
+]
+
