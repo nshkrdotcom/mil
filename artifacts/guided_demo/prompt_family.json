@@ -1,0 +1,39 @@
+{
+  "description": "A small negation/control family adapted from the SELF-GROUND task bank.",
+  "family_id": "guided-sentiment-negation-movie",
+  "target_concept": "sentiment_negation",
+  "variants": [
+    {
+      "expected_behavior": "negative > positive",
+      "foil_token": " positive",
+      "label": "negated",
+      "prompt": "The movie was not positive. The movie was",
+      "role": "target",
+      "target_token": " negative"
+    },
+    {
+      "expected_behavior": "negative > positive",
+      "foil_token": " positive",
+      "label": "paraphrased_negation",
+      "prompt": "The movie wasn't positive. The movie was",
+      "role": "target_paraphrase",
+      "target_token": " negative"
+    },
+    {
+      "expected_behavior": "positive > negative",
+      "foil_token": " negative",
+      "label": "non_negated_control",
+      "prompt": "The movie was positive. The movie was",
+      "role": "control",
+      "target_token": " positive"
+    },
+    {
+      "expected_behavior": "positive > negative",
+      "foil_token": " negative",
+      "label": "neutral_decoy",
+      "prompt": "The movie was often positive. The movie was",
+      "role": "control_decoy",
+      "target_token": " positive"
+    }
+  ]
+}

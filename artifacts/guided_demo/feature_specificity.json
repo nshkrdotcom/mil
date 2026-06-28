@@ -1,0 +1,78 @@
+{
+  "hook": "blocks.2.hook_resid_post",
+  "rows": [
+    {
+      "contrast": 5.2324323654174805,
+      "feature_id": 24022,
+      "kind": "candidate",
+      "mean_activation": 0.1494980752468109
+    },
+    {
+      "contrast": 4.698235511779785,
+      "feature_id": 11563,
+      "kind": "candidate",
+      "mean_activation": 0.206056147813797
+    },
+    {
+      "contrast": 3.0248706340789795,
+      "feature_id": 16463,
+      "kind": "candidate",
+      "mean_activation": 0.08642487227916718
+    },
+    {
+      "contrast": 2.5418124198913574,
+      "feature_id": 3717,
+      "kind": "candidate",
+      "mean_activation": 0.4840068221092224
+    },
+    {
+      "contrast": 2.5123863220214844,
+      "feature_id": 10757,
+      "kind": "candidate",
+      "mean_activation": 7.409299850463867
+    },
+    {
+      "contrast": 2.001056671142578,
+      "feature_id": 4770,
+      "kind": "candidate",
+      "mean_activation": 6.316323757171631
+    },
+    {
+      "contrast": 0.0,
+      "feature_id": 28031,
+      "kind": "density_control",
+      "mean_activation": 0.16921868920326233
+    },
+    {
+      "contrast": 0.0,
+      "feature_id": 28624,
+      "kind": "density_control",
+      "mean_activation": 0.229689821600914
+    },
+    {
+      "contrast": 0.0,
+      "feature_id": 21321,
+      "kind": "density_control",
+      "mean_activation": 0.08289401233196259
+    },
+    {
+      "contrast": 0.0,
+      "feature_id": 28096,
+      "kind": "density_control",
+      "mean_activation": 0.5553138852119446
+    },
+    {
+      "contrast": 0.0,
+      "feature_id": 17961,
+      "kind": "density_control",
+      "mean_activation": 4.2424092292785645
+    },
+    {
+      "contrast": 0.0,
+      "feature_id": 23827,
+      "kind": "density_control",
+      "mean_activation": 3.036879539489746
+    }
+  ],
+  "sae_id": "blocks.2.hook_resid_post"
+}

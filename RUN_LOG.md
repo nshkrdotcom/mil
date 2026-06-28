@@ -221,3 +221,97 @@ All checks passed!
 import mil ok
 import mil ok
 ```
+
+## Guided walkthrough redesign
+
+Environment refresh:
+
+```bash
+./scripts/bootstrap_uv.sh
+```
+
+Key output:
+
+```text
+torch.__version__ = 2.7.1+cu128
+torch.version.cuda = 12.8
+torch.cuda.is_available() = True
+torch.cuda.get_device_capability() = (12, 0)
+cuda matmul: 2048x2048 @ 2048x2048, dtype=torch.float16, best_ms=0.449, median_ms=0.478
+PASS: CUDA tensor matmul ran on the GPU with real timing.
+```
+
+Guided artifact build:
+
+```bash
+.venv/bin/python scripts/build_guided_demo_artifacts.py --device cuda --artifacts-dir artifacts/guided_demo
+```
+
+Key output:
+
+```text
+model_name=pythia-70m-deduped
+hook=blocks.2.hook_resid_post
+device=cuda
+sae=pythia-70m-deduped-res-sm/blocks.2.hook_resid_post
+torch.cuda.get_device_capability()=(12, 0)
+Loaded pretrained model pythia-70m-deduped into HookedTransformer
+first_parameter_device=cuda:0
+attention=artifacts/guided_demo/attention_layer0_head0.html (ok)
+feature_status=loaded pythia-70m-deduped-res-sm/blocks.2.hook_resid_post
+manifest=artifacts/guided_demo/demo_manifest.json
+```
+
+Generated guided artifacts:
+
+```text
+artifacts/guided_demo/prompt_family.json
+artifacts/guided_demo/tokenization.json
+artifacts/guided_demo/behavior_logits.json
+artifacts/guided_demo/logit_lens.json
+artifacts/guided_demo/causal_heatmap.json
+artifacts/guided_demo/causal_heatmap_target.html
+artifacts/guided_demo/causal_heatmap_control.html
+artifacts/guided_demo/causal_heatmap_difference.html
+artifacts/guided_demo/patch_summary.json
+artifacts/guided_demo/token_deltas.html
+artifacts/guided_demo/feature_table.html
+artifacts/guided_demo/feature_raster.html
+artifacts/guided_demo/residual_trajectory.html
+artifacts/guided_demo/attention_layer0_head0.html
+artifacts/guided_demo/app_guided_smoke.png
+```
+
+Guided Streamlit smoke:
+
+```bash
+.venv/bin/streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8501 -- --demo guided
+curl -sf http://localhost:8501 -o /dev/null -w '%{http_code}'
+```
+
+Output:
+
+```text
+200
+```
+
+Browser smoke found the guided title, `Control ratio`, four summary metrics, and
+ten rendered Plotly plots before saving:
+
+```text
+artifacts/guided_demo/app_guided_smoke.png
+```
+
+Final QC after the guided redesign:
+
+```bash
+.venv/bin/ruff check .
+.venv/bin/python -m pytest
+```
+
+Output:
+
+```text
+All checks passed!
+31 passed in 0.90s
+```

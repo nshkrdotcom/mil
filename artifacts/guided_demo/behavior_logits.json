@@ -1,0 +1,57 @@
+{
+  "readout": "target - foil next-token logit margin",
+  "variants": [
+    {
+      "foil_logit": 20.807201385498047,
+      "foil_probability": 0.013089238665997982,
+      "foil_token": " positive",
+      "foil_token_id": 2762,
+      "label": "negated",
+      "margin": 0.8467636108398438,
+      "role": "target",
+      "target_logit": 21.65396499633789,
+      "target_probability": 0.030525242909789085,
+      "target_token": " negative",
+      "target_token_id": 4016
+    },
+    {
+      "foil_logit": 19.873584747314453,
+      "foil_probability": 0.008938702754676342,
+      "foil_token": " positive",
+      "foil_token_id": 2762,
+      "label": "paraphrased_negation",
+      "margin": 0.42951393127441406,
+      "role": "target_paraphrase",
+      "target_logit": 20.303098678588867,
+      "target_probability": 0.01373441144824028,
+      "target_token": " negative",
+      "target_token_id": 4016
+    },
+    {
+      "foil_logit": 21.54327392578125,
+      "foil_probability": 0.024462107568979263,
+      "foil_token": " negative",
+      "foil_token_id": 4016,
+      "label": "non_negated_control",
+      "margin": -0.00055694580078125,
+      "role": "control",
+      "target_logit": 21.54271697998047,
+      "target_probability": 0.024448486045002937,
+      "target_token": " positive",
+      "target_token_id": 2762
+    },
+    {
+      "foil_logit": 19.070289611816406,
+      "foil_probability": 0.0021018784027546644,
+      "foil_token": " negative",
+      "foil_token_id": 4016,
+      "label": "neutral_decoy",
+      "margin": 0.6876678466796875,
+      "role": "control_decoy",
+      "target_logit": 19.757957458496094,
+      "target_probability": 0.004180786199867725,
+      "target_token": " positive",
+      "target_token_id": 2762
+    }
+  ]
+}

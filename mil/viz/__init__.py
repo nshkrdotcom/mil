@@ -43,6 +43,218 @@ def attention(
     )
 
 
+def _go():
+    _require("plotly")
+    import importlib
+
+    return importlib.import_module("plotly.graph_objects")
+
+
+def _nan_array(matrix: Any):
+    import numpy as np
+
+    return np.array(
+        [[np.nan if cell is None else cell for cell in row] for row in matrix],
+        dtype=float,
+    )
+
+
+def prompt_family_table(prompt_family: dict):
+    go = _go()
+    rows = prompt_family["variants"]
+    return go.Figure(
+        data=[
+            go.Table(
+                header={"values": ["Variant", "Role", "Prompt", "Target", "Foil"]},
+                cells={
+                    "values": [
+                        [row["label"] for row in rows],
+                        [row.get("role", "") for row in rows],
+                        [row["prompt"] for row in rows],
+                        [row.get("target_token", "") for row in rows],
+                        [row.get("foil_token", "") for row in rows],
+                    ]
+                },
+            )
+        ]
+    )
+
+
+def tokenization_view(tokenization: dict):
+    go = _go()
+    variants = tokenization["variants"]
+    max_len = max((len(row["tokens"]) for row in variants), default=0)
+    headers = ["Variant"] + [str(i) for i in range(max_len)]
+    values = [[row["label"] for row in variants]]
+    for pos in range(max_len):
+        values.append([row["tokens"][pos] if pos < len(row["tokens"]) else "" for row in variants])
+    fig = go.Figure(data=[go.Table(header={"values": headers}, cells={"values": values})])
+    fig.update_layout(title="Tokenization by prompt variant")
+    return fig
+
+
+def behavior_logit_bars(behavior: dict):
+    go = _go()
+    variants = behavior["variants"]
+    x = [row["label"] for row in variants]
+    fig = go.Figure()
+    fig.add_bar(
+        x=x,
+        y=[row["target_logit"] for row in variants],
+        name="target",
+        text=[row["target_token"] for row in variants],
+    )
+    fig.add_bar(
+        x=x,
+        y=[row["foil_logit"] for row in variants],
+        name="foil",
+        text=[row["foil_token"] for row in variants],
+    )
+    fig.update_layout(
+        title="Next-token target vs foil logits",
+        yaxis_title="logit",
+        barmode="group",
+    )
+    return fig
+
+
+def logit_margin_curve(logit_lens: dict):
+    go = _go()
+    fig = go.Figure()
+    layers = logit_lens["layers"]
+    for row in logit_lens["variants"]:
+        fig.add_scatter(x=layers, y=row["margins"], mode="lines+markers", name=row["label"])
+    fig.update_layout(
+        title="Logit-lens margin over depth",
+        xaxis_title="layer",
+        yaxis_title="target - foil logit margin",
+    )
+    return fig
+
+
+def causal_heatmap(data: dict, title: str | None = None):
+    go = _go()
+    z = _nan_array(data["matrix"])
+    fig = go.Figure(
+        data=[
+            go.Heatmap(
+                z=z,
+                x=data["tokens"],
+                y=[str(layer) for layer in data["layers"]],
+                colorscale="RdBu",
+                zmid=0,
+            )
+        ]
+    )
+    fig.update_layout(
+        title=title or data.get("title", "Causal heatmap"),
+        xaxis_title="token position",
+        yaxis_title="layer",
+    )
+    return fig
+
+
+def causal_difference_heatmap(target: dict, control: dict):
+    from mil.guided_demo import causal_difference
+
+    diff = {
+        "layers": target["layers"],
+        "tokens": target["tokens"],
+        "matrix": causal_difference(target["matrix"], control["matrix"]),
+    }
+    return causal_heatmap(diff, title="Target minus control causal effect")
+
+
+def feature_activation_raster(raster: dict):
+    go = _go()
+    y = [f"{row['kind']} {row['feature_id']}" for row in raster["rows"]]
+    z = _nan_array([row["values"] for row in raster["rows"]])
+    fig = go.Figure(
+        data=[go.Heatmap(z=z, x=raster["columns"], y=y, colorscale="Viridis")]
+    )
+    fig.update_layout(
+        title="SAE feature activation raster",
+        xaxis_title="prompt variant x token",
+        yaxis_title="feature",
+        height=max(420, 24 * len(y)),
+    )
+    return fig
+
+
+def candidate_control_specificity_plot(specificity: dict):
+    go = _go()
+    rows = specificity["rows"]
+    colors = ["#2f7d4f" if row["kind"] == "candidate" else "#8a8f98" for row in rows]
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=[str(row["feature_id"]) for row in rows],
+                y=[row["contrast"] for row in rows],
+                marker_color=colors,
+            )
+        ]
+    )
+    fig.update_layout(
+        title="Candidate vs density-matched feature contrast",
+        xaxis_title="feature id",
+        yaxis_title="negation-control activation contrast",
+    )
+    return fig
+
+
+def residual_trajectory_2d(trajectory: dict):
+    go = _go()
+    fig = go.Figure()
+    for label, points in trajectory["variants"].items():
+        fig.add_scatter(
+            x=[point["x"] for point in points],
+            y=[point["y"] for point in points],
+            mode="lines+markers+text",
+            text=[str(point["step"]) for point in points],
+            name=label,
+        )
+    fig.update_layout(
+        title="Residual stream trajectory, shared PCA basis",
+        xaxis_title="PC1",
+        yaxis_title="PC2",
+    )
+    return fig
+
+
+def residual_trajectory_3d(trajectory: dict):
+    go = _go()
+    fig = go.Figure()
+    for label, points in trajectory["variants"].items():
+        z = [point.get("z", point["step"]) for point in points]
+        fig.add_scatter3d(
+            x=[point["x"] for point in points],
+            y=[point["y"] for point in points],
+            z=z,
+            mode="lines+markers",
+            name=label,
+        )
+    fig.update_layout(title="Residual stream trajectory")
+    return fig
+
+
+def patch_before_after(patch_summary: dict):
+    go = _go()
+    rows = patch_summary["rows"]
+    fig = go.Figure()
+    fig.add_bar(x=[row["label"] for row in rows], y=[row["clean_margin"] for row in rows], name="clean")
+    fig.add_bar(
+        x=[row["label"] for row in rows],
+        y=[row["patched_margin"] for row in rows],
+        name="patched/ablated",
+    )
+    fig.update_layout(
+        title="Clean vs intervened logit margin",
+        yaxis_title="target - foil logit margin",
+        barmode="group",
+    )
+    return fig
+
+
 def feature_table(ranking: "FeatureRanking", top_k: int = 20):
     _require("plotly")
     import importlib

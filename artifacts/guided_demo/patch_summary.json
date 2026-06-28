@@ -1,0 +1,179 @@
+{
+  "control_report": {
+    "control_max": 0.5888433456420898,
+    "flagged": false,
+    "gap": 1.252131462097168,
+    "ratio": 0.31985410292778393,
+    "target_delta": -1.8409748077392578,
+    "threshold": 0.8
+  },
+  "hook": "blocks.2.hook_resid_post",
+  "intervention": "last-token residual ablation",
+  "patch_result": {
+    "control_deltas": [
+      0.5888433456420898,
+      0.5156316757202148
+    ],
+    "control_mean": 0.5522375106811523,
+    "hook": "blocks.2.hook_resid_post",
+    "metric": "logit_diff_delta",
+    "mode": "ablation",
+    "target_deltas": [
+      -2.049342155456543,
+      -1.6326074600219727
+    ],
+    "target_mean": -1.8409748077392578,
+    "token_deltas": [
+      {
+        "delta": 11.76285171508789,
+        "direction": "positive",
+        "token": "\ufffd",
+        "token_id": 39936
+      },
+      {
+        "delta": 11.540217399597168,
+        "direction": "positive",
+        "token": "ETHERTYPE",
+        "token_id": 45330
+      },
+      {
+        "delta": 11.191871643066406,
+        "direction": "positive",
+        "token": "\u0c4d",
+        "token_id": 42916
+      },
+      {
+        "delta": 11.113025665283203,
+        "direction": "positive",
+        "token": "\u0c41",
+        "token_id": 48058
+      },
+      {
+        "delta": 10.619866371154785,
+        "direction": "positive",
+        "token": "\ufffd",
+        "token_id": 18081
+      },
+      {
+        "delta": 10.41647720336914,
+        "direction": "positive",
+        "token": "\ufffd",
+        "token_id": 22379
+      },
+      {
+        "delta": 10.208023071289062,
+        "direction": "positive",
+        "token": "\u1010",
+        "token_id": 49669
+      },
+      {
+        "delta": 9.89441204071045,
+        "direction": "positive",
+        "token": "\u1000",
+        "token_id": 48716
+      },
+      {
+        "delta": 9.891486167907715,
+        "direction": "positive",
+        "token": "dAtA",
+        "token_id": 45581
+      },
+      {
+        "delta": 9.866750717163086,
+        "direction": "positive",
+        "token": "\u1038",
+        "token_id": 48969
+      },
+      {
+        "delta": -9.964837074279785,
+        "direction": "negative",
+        "token": " negative",
+        "token_id": 4016
+      },
+      {
+        "delta": -9.430646896362305,
+        "direction": "negative",
+        "token": " disappointing",
+        "token_id": 31623
+      },
+      {
+        "delta": -9.307851791381836,
+        "direction": "negative",
+        "token": " unsatisf",
+        "token_id": 43288
+      },
+      {
+        "delta": -9.22907829284668,
+        "direction": "negative",
+        "token": " funny",
+        "token_id": 11755
+      },
+      {
+        "delta": -9.177699089050293,
+        "direction": "negative",
+        "token": " gross",
+        "token_id": 13711
+      },
+      {
+        "delta": -9.12965202331543,
+        "direction": "negative",
+        "token": " borderline",
+        "token_id": 45210
+      },
+      {
+        "delta": -9.02298641204834,
+        "direction": "negative",
+        "token": " medi",
+        "token_id": 12069
+      },
+      {
+        "delta": -8.98017692565918,
+        "direction": "negative",
+        "token": " directed",
+        "token_id": 6828
+      },
+      {
+        "delta": -8.971551895141602,
+        "direction": "negative",
+        "token": " skewed",
+        "token_id": 46746
+      },
+      {
+        "delta": -8.955024719238281,
+        "direction": "negative",
+        "token": " hilarious",
+        "token_id": 37750
+      }
+    ]
+  },
+  "rows": [
+    {
+      "clean_margin": 0.8467636108398438,
+      "delta": -2.049342155456543,
+      "kind": "target",
+      "label": "negated",
+      "patched_margin": -1.2025785446166992
+    },
+    {
+      "clean_margin": 0.42951393127441406,
+      "delta": -1.6326074600219727,
+      "kind": "target",
+      "label": "paraphrased_negation",
+      "patched_margin": -1.2030935287475586
+    },
+    {
+      "clean_margin": -0.00055694580078125,
+      "delta": 0.5888433456420898,
+      "kind": "control",
+      "label": "non_negated_control",
+      "patched_margin": 0.5882863998413086
+    },
+    {
+      "clean_margin": 0.6876678466796875,
+      "delta": 0.5156316757202148,
+      "kind": "control",
+      "label": "neutral_decoy",
+      "patched_margin": 1.2032995223999023
+    }
+  ]
+}

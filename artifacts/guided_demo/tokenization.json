@@ -1,0 +1,63 @@
+{
+  "variants": [
+    {
+      "label": "negated",
+      "prompt": "The movie was not positive. The movie was",
+      "tokens": [
+        "The",
+        " movie",
+        " was",
+        " not",
+        " positive",
+        ".",
+        " The",
+        " movie",
+        " was"
+      ]
+    },
+    {
+      "label": "paraphrased_negation",
+      "prompt": "The movie wasn't positive. The movie was",
+      "tokens": [
+        "The",
+        " movie",
+        " wasn",
+        "'t",
+        " positive",
+        ".",
+        " The",
+        " movie",
+        " was"
+      ]
+    },
+    {
+      "label": "non_negated_control",
+      "prompt": "The movie was positive. The movie was",
+      "tokens": [
+        "The",
+        " movie",
+        " was",
+        " positive",
+        ".",
+        " The",
+        " movie",
+        " was"
+      ]
+    },
+    {
+      "label": "neutral_decoy",
+      "prompt": "The movie was often positive. The movie was",
+      "tokens": [
+        "The",
+        " movie",
+        " was",
+        " often",
+        " positive",
+        ".",
+        " The",
+        " movie",
+        " was"
+      ]
+    }
+  ]
+}
