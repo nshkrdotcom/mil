@@ -59,13 +59,47 @@ def _nan_array(matrix: Any):
     )
 
 
+def _compact_layout(fig: Any, **kwargs: Any) -> Any:
+    """Apply a consistent compact, dark-background layout to a Plotly figure.
+
+    Parameters
+    ----------
+    fig:
+        A ``plotly.graph_objects.Figure`` instance to update in-place.
+    **kwargs:
+        Additional ``update_layout`` kwargs (title, xaxis_title, etc.) that
+        supplement (not replace) the shared compact defaults.
+
+    Returns
+    -------
+    The same figure, updated in-place.
+    """
+    defaults: dict[str, Any] = dict(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(17,24,39,0.85)",
+        font=dict(family="Inter, ui-sans-serif, sans-serif", size=11, color="#e5e7eb"),
+        margin=dict(l=36, r=16, t=36, b=32),
+        legend=dict(bgcolor="rgba(0,0,0,0)", font_size=10),
+        coloraxis_colorbar=dict(thickness=10, len=0.7),
+        height=260,
+    )
+    defaults.update(kwargs)
+    fig.update_layout(**defaults)
+    return fig
+
+
 def prompt_family_table(prompt_family: dict):
     go = _go()
     rows = prompt_family["variants"]
-    return go.Figure(
+    fig = go.Figure(
         data=[
             go.Table(
-                header={"values": ["Variant", "Role", "Prompt", "Target", "Foil"]},
+                header={
+                    "values": ["Variant", "Role", "Prompt", "Target", "Foil"],
+                    "fill_color": "#1e293b",
+                    "font": {"color": "#e5e7eb", "size": 11},
+                    "line_color": "rgba(148,163,184,0.2)",
+                },
                 cells={
                     "values": [
                         [row["label"] for row in rows],
@@ -73,11 +107,15 @@ def prompt_family_table(prompt_family: dict):
                         [row["prompt"] for row in rows],
                         [row.get("target_token", "") for row in rows],
                         [row.get("foil_token", "") for row in rows],
-                    ]
+                    ],
+                    "fill_color": "#111827",
+                    "font": {"color": "#94a3b8", "size": 10},
+                    "line_color": "rgba(148,163,184,0.12)",
                 },
             )
         ]
     )
+    return _compact_layout(fig, title="Prompt family", height=220)
 
 
 def tokenization_view(tokenization: dict):
@@ -88,9 +126,25 @@ def tokenization_view(tokenization: dict):
     values = [[row["label"] for row in variants]]
     for pos in range(max_len):
         values.append([row["tokens"][pos] if pos < len(row["tokens"]) else "" for row in variants])
-    fig = go.Figure(data=[go.Table(header={"values": headers}, cells={"values": values})])
-    fig.update_layout(title="Tokenization by prompt variant")
-    return fig
+    fig = go.Figure(
+        data=[
+            go.Table(
+                header={
+                    "values": headers,
+                    "fill_color": "#1e293b",
+                    "font": {"color": "#e5e7eb", "size": 11},
+                    "line_color": "rgba(148,163,184,0.2)",
+                },
+                cells={
+                    "values": values,
+                    "fill_color": "#111827",
+                    "font": {"color": "#94a3b8", "size": 10},
+                    "line_color": "rgba(148,163,184,0.12)",
+                },
+            )
+        ]
+    )
+    return _compact_layout(fig, title="Tokenization by prompt variant", height=220)
 
 
 def behavior_logit_bars(behavior: dict):
@@ -103,19 +157,21 @@ def behavior_logit_bars(behavior: dict):
         y=[row["target_logit"] for row in variants],
         name="target",
         text=[row["target_token"] for row in variants],
+        marker_color="#38bdf8",
     )
     fig.add_bar(
         x=x,
         y=[row["foil_logit"] for row in variants],
         name="foil",
         text=[row["foil_token"] for row in variants],
+        marker_color="#fb7185",
     )
-    fig.update_layout(
-        title="Next-token target vs foil logits",
+    return _compact_layout(
+        fig,
+        title="Target vs foil logits",
         yaxis_title="logit",
         barmode="group",
     )
-    return fig
 
 
 def logit_margin_curve(logit_lens: dict):
@@ -124,12 +180,12 @@ def logit_margin_curve(logit_lens: dict):
     layers = logit_lens["layers"]
     for row in logit_lens["variants"]:
         fig.add_scatter(x=layers, y=row["margins"], mode="lines+markers", name=row["label"])
-    fig.update_layout(
+    return _compact_layout(
+        fig,
         title="Logit-lens margin over depth",
         xaxis_title="layer",
-        yaxis_title="target - foil logit margin",
+        yaxis_title="target − foil margin",
     )
-    return fig
 
 
 def causal_heatmap(data: dict, title: str | None = None):
@@ -146,12 +202,12 @@ def causal_heatmap(data: dict, title: str | None = None):
             )
         ]
     )
-    fig.update_layout(
+    return _compact_layout(
+        fig,
         title=title or data.get("title", "Causal heatmap"),
-        xaxis_title="token position",
+        xaxis_title="token",
         yaxis_title="layer",
     )
-    return fig
 
 
 def causal_difference_heatmap(target: dict, control: dict):
@@ -184,7 +240,7 @@ def feature_activation_raster(raster: dict):
 def candidate_control_specificity_plot(specificity: dict):
     go = _go()
     rows = specificity["rows"]
-    colors = ["#2f7d4f" if row["kind"] == "candidate" else "#8a8f98" for row in rows]
+    colors = ["#34d399" if row["kind"] == "candidate" else "#64748b" for row in rows]
     fig = go.Figure(
         data=[
             go.Bar(
@@ -194,12 +250,12 @@ def candidate_control_specificity_plot(specificity: dict):
             )
         ]
     )
-    fig.update_layout(
-        title="Candidate vs density-matched feature contrast",
+    return _compact_layout(
+        fig,
+        title="Candidate vs control feature contrast",
         xaxis_title="feature id",
-        yaxis_title="negation-control activation contrast",
+        yaxis_title="negation−control contrast",
     )
-    return fig
 
 
 def residual_trajectory_2d(trajectory: dict):
@@ -211,14 +267,15 @@ def residual_trajectory_2d(trajectory: dict):
             y=[point["y"] for point in points],
             mode="lines+markers+text",
             text=[str(point["step"]) for point in points],
+            textposition="top center",
             name=label,
         )
-    fig.update_layout(
-        title="Residual stream trajectory, shared PCA basis",
+    return _compact_layout(
+        fig,
+        title="Residual trajectory (shared PCA)",
         xaxis_title="PC1",
         yaxis_title="PC2",
     )
-    return fig
 
 
 def residual_trajectory_3d(trajectory: dict):
@@ -241,18 +298,24 @@ def patch_before_after(patch_summary: dict):
     go = _go()
     rows = patch_summary["rows"]
     fig = go.Figure()
-    fig.add_bar(x=[row["label"] for row in rows], y=[row["clean_margin"] for row in rows], name="clean")
+    fig.add_bar(
+        x=[row["label"] for row in rows],
+        y=[row["clean_margin"] for row in rows],
+        name="clean",
+        marker_color="#38bdf8",
+    )
     fig.add_bar(
         x=[row["label"] for row in rows],
         y=[row["patched_margin"] for row in rows],
-        name="patched/ablated",
+        name="ablated",
+        marker_color="#f59e0b",
     )
-    fig.update_layout(
-        title="Clean vs intervened logit margin",
-        yaxis_title="target - foil logit margin",
+    return _compact_layout(
+        fig,
+        title="Clean vs ablated margin",
+        yaxis_title="target − foil margin",
         barmode="group",
     )
-    return fig
 
 
 def feature_table(ranking: "FeatureRanking", top_k: int = 20):
