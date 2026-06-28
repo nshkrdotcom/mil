@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mil.tools import logged
 from mil.tools.interventions import PatchResult, _mean, _metric_from_logits
+
+if TYPE_CHECKING:
+    from mil.tools.models import ModelHandle
 
 
 @dataclass
@@ -62,13 +65,16 @@ class SAEHandle:
 
 
 @logged
-def load_sae(release: str, sae_id: str) -> SAEHandle:
+def load_sae(release: str, sae_id: str, device: str | None = None) -> SAEHandle:
     try:
         from sae_lens import SAE
     except ImportError as e:
         raise ImportError("SAELens is required. Install with: pip install mil[sae]") from e
-    sae, _, _ = SAE.from_pretrained(release=release, sae_id=sae_id)
-    return SAEHandle(release=release, sae_id=sae_id, hook=sae.cfg.hook_name, _sae=sae)
+    kwargs = {"device": device} if device is not None else {}
+    loaded = SAE.from_pretrained(release=release, sae_id=sae_id, **kwargs)
+    sae = loaded[0] if isinstance(loaded, tuple) else loaded
+    hook = getattr(getattr(sae, "cfg", None), "hook_name", sae_id)
+    return SAEHandle(release=release, sae_id=sae_id, hook=hook, _sae=sae)
 
 
 @logged

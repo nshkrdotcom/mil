@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from numbers import Real
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mil.tools import logged
+
+if TYPE_CHECKING:
+    from mil.tools.activations import ActivationsHandle
+    from mil.tools.models import ModelHandle
 
 
 @dataclass
@@ -18,6 +22,7 @@ class PatchResult:
     control_deltas: list[float]
     target_mean: float
     control_mean: float | None
+    token_deltas: list[dict] = field(default_factory=list)
 
     def _mil_summary(self) -> dict:
         return {
@@ -29,6 +34,7 @@ class PatchResult:
             "control_mean": self.control_mean,
             "num_targets": len(self.target_deltas),
             "num_controls": len(self.control_deltas),
+            "num_token_deltas": len(self.token_deltas),
         }
 
 
@@ -74,6 +80,48 @@ def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _top_token_deltas(model: Any, clean_logits: Any, patched_logits: Any, top_k: int = 10) -> list[dict]:
+    import torch
+
+    deltas = (patched_logits[:, -1, :] - clean_logits[:, -1, :]).float().mean(0)
+    k = min(top_k, deltas.numel())
+    pos_values, pos_indices = torch.topk(deltas, k=k)
+    neg_values, neg_indices = torch.topk(-deltas, k=k)
+    rows = []
+    for value, index in zip(pos_values.tolist(), pos_indices.tolist()):
+        rows.append(
+            {
+                "token_id": int(index),
+                "token": _token_to_string(model, int(index)),
+                "delta": float(value),
+                "direction": "positive",
+            }
+        )
+    for value, index in zip(neg_values.tolist(), neg_indices.tolist()):
+        rows.append(
+            {
+                "token_id": int(index),
+                "token": _token_to_string(model, int(index)),
+                "delta": float(-value),
+                "direction": "negative",
+            }
+        )
+    return rows
+
+
+def _token_to_string(model: Any, token_id: int) -> str:
+    tokenizer_model = model._model
+    for method in ("to_single_str_token", "to_string"):
+        fn = getattr(tokenizer_model, method, None)
+        if fn is None:
+            continue
+        try:
+            return str(fn(token_id))
+        except Exception:
+            pass
+    return str(token_id)
+
+
 @logged
 def patch(
     model: "ModelHandle",
@@ -92,13 +140,12 @@ def patch(
 
     hook_name = hook
 
-    def run_metric(prompts: list[str], token_spec, foil_spec) -> list[float]:
+    def run_logits(prompts: list[str]):
         tokens = model._model.to_tokens(prompts)
         with torch.no_grad():
-            logits = model._model(tokens)
-        return _metric_from_logits(model, logits, prompts, metric, token_spec, foil_spec)
+            return model._model(tokens)
 
-    def hook_fn(activation, hook_point):
+    def hook_fn(activation, hook=None):
         if isinstance(source, Real):
             return torch.full_like(activation, source)
         src_act = source._cache[hook_name]
@@ -113,22 +160,33 @@ def patch(
                 out[:, pos, :] = src_act[:, pos, :]
         return out
 
-    def run_patched(prompts: list[str], token_spec, foil_spec) -> list[float]:
+    def run_patched_logits(prompts: list[str]):
         tokens = model._model.to_tokens(prompts)
         with torch.no_grad():
-            logits = model._model.run_with_hooks(tokens, fwd_hooks=[(hook_name, hook_fn)])
-        return _metric_from_logits(model, logits, prompts, metric, token_spec, foil_spec)
+            return model._model.run_with_hooks(tokens, fwd_hooks=[(hook_name, hook_fn)])
 
-    baseline_target = run_metric(target_prompts, target_tokens, foil_tokens)
-    patched_target = run_patched(target_prompts, target_tokens, foil_tokens)
+    baseline_target_logits = run_logits(target_prompts)
+    patched_target_logits = run_patched_logits(target_prompts)
+    baseline_target = _metric_from_logits(
+        model, baseline_target_logits, target_prompts, metric, target_tokens, foil_tokens
+    )
+    patched_target = _metric_from_logits(
+        model, patched_target_logits, target_prompts, metric, target_tokens, foil_tokens
+    )
     target_deltas = [p - b for p, b in zip(patched_target, baseline_target)]
 
     control_deltas: list[float] = []
     if control_prompts:
         ctrl_tokens = control_tokens if control_tokens is not None else target_tokens
         ctrl_foils = control_foil_tokens if control_foil_tokens is not None else foil_tokens
-        baseline_ctrl = run_metric(control_prompts, ctrl_tokens, ctrl_foils)
-        patched_ctrl = run_patched(control_prompts, ctrl_tokens, ctrl_foils)
+        baseline_ctrl_logits = run_logits(control_prompts)
+        patched_ctrl_logits = run_patched_logits(control_prompts)
+        baseline_ctrl = _metric_from_logits(
+            model, baseline_ctrl_logits, control_prompts, metric, ctrl_tokens, ctrl_foils
+        )
+        patched_ctrl = _metric_from_logits(
+            model, patched_ctrl_logits, control_prompts, metric, ctrl_tokens, ctrl_foils
+        )
         control_deltas = [p - b for p, b in zip(patched_ctrl, baseline_ctrl)]
 
     return PatchResult(
@@ -139,4 +197,5 @@ def patch(
         control_deltas=control_deltas,
         target_mean=_mean(target_deltas),
         control_mean=_mean(control_deltas) if control_deltas else None,
+        token_deltas=_top_token_deltas(model, baseline_target_logits, patched_target_logits),
     )

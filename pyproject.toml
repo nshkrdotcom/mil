@@ -17,6 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 sae = ["sae-lens"]
 viz = ["circuitsvis", "plotly"]
+app = ["streamlit"]
 wandb = ["wandb"]
 nnsight = ["nnsight"]
 dev = ["pytest", "ruff", "torch"]
@@ -29,4 +30,3 @@ testpaths = ["tests"]
 markers = [
     "slow: tests that load real model dependencies",
 ]
-

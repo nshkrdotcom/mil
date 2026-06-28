@@ -1,0 +1,1 @@
+No matching public SAE wired for model 'pythia-70m' at 'blocks.2.hook_resid_post'. SAELens release 'pythia-70m-deduped-res-sm' is for pythia-70m-deduped, so the demo does not encode non-deduped activations with it.

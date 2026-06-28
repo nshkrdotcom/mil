@@ -1,0 +1,149 @@
+{
+  "control_deltas": [
+    -1.505732536315918,
+    -2.062851905822754,
+    0.33937740325927734,
+    -3.2503862380981445,
+    -1.536585807800293,
+    -2.513181686401367,
+    -0.9019899368286133,
+    -2.1425294876098633
+  ],
+  "control_mean": -1.6967350244522095,
+  "hook": "blocks.2.hook_resid_post",
+  "metric": "logit_diff_delta",
+  "mode": "ablation",
+  "target_deltas": [
+    1.116805076599121,
+    1.299546241760254,
+    -0.3820314407348633,
+    2.335148811340332,
+    1.570969581604004,
+    2.3678693771362305,
+    0.7125329971313477,
+    1.1319799423217773
+  ],
+  "target_mean": 1.2691025733947754,
+  "token_deltas": [
+    {
+      "delta": 59.12715148925781,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 101
+    },
+    {
+      "delta": 58.439720153808594,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 97
+    },
+    {
+      "delta": 57.92962646484375,
+      "direction": "positive",
+      "token": "\ufffd\ufffd",
+      "token_id": 44140
+    },
+    {
+      "delta": 57.21588897705078,
+      "direction": "positive",
+      "token": "\ufffd\ufffd",
+      "token_id": 8318
+    },
+    {
+      "delta": 56.96025848388672,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 233
+    },
+    {
+      "delta": 56.58726501464844,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 100
+    },
+    {
+      "delta": 55.652610778808594,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 234
+    },
+    {
+      "delta": 55.347694396972656,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 114
+    },
+    {
+      "delta": 55.30510711669922,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 99
+    },
+    {
+      "delta": 55.08271789550781,
+      "direction": "positive",
+      "token": "\ufffd",
+      "token_id": 216
+    },
+    {
+      "delta": -21.18157386779785,
+      "direction": "negative",
+      "token": ":`",
+      "token_id": 30337
+    },
+    {
+      "delta": -20.09361457824707,
+      "direction": "negative",
+      "token": " his",
+      "token_id": 521
+    },
+    {
+      "delta": -19.074026107788086,
+      "direction": "negative",
+      "token": "'\">",
+      "token_id": 46768
+    },
+    {
+      "delta": -19.015546798706055,
+      "direction": "negative",
+      "token": ":&",
+      "token_id": 44662
+    },
+    {
+      "delta": -18.26312828063965,
+      "direction": "negative",
+      "token": "\n\u00a0\u00a0",
+      "token_id": 39318
+    },
+    {
+      "delta": -18.250436782836914,
+      "direction": "negative",
+      "token": "iei",
+      "token_id": 44710
+    },
+    {
+      "delta": -18.151241302490234,
+      "direction": "negative",
+      "token": ":*",
+      "token_id": 27506
+    },
+    {
+      "delta": -17.970794677734375,
+      "direction": "negative",
+      "token": " her",
+      "token_id": 617
+    },
+    {
+      "delta": -17.93769073486328,
+      "direction": "negative",
+      "token": "---|---",
+      "token_id": 20782
+    },
+    {
+      "delta": -17.863788604736328,
+      "direction": "negative",
+      "token": "noreply",
+      "token_id": 46352
+    }
+  ]
+}
