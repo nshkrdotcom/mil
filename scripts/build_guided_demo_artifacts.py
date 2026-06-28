@@ -31,6 +31,7 @@ from mil.guided_demo import (
 from mil.tools import check_controls, get_activations, load_model, patch
 from mil.viz import (
     attention,
+    attention_heatmap,
     candidate_control_specificity_plot,
     causal_difference_heatmap,
     causal_heatmap,
@@ -160,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         "residual_trajectory": "residual_trajectory.json",
         "residual_trajectory_html": "residual_trajectory.html",
         "attention": attention_path.name,
+        "attention_heatmap": f"attention_layer{args.attention_layer}_head{args.attention_head}_heatmap.html",
     }
 
     feature_status = _maybe_export_feature_artifacts(
@@ -553,6 +555,10 @@ def _export_attention(
     attention_hook = f"blocks.{layer}.attn.hook_pattern"
     activations = get_activations(model, prompts=prompts, hooks=[attention_hook])
     token_labels = model._model.to_str_tokens(prompts[0])
+    attention_heatmap(activations, layer=layer, head=head, tokens=token_labels).write_html(
+        artifacts_dir / f"attention_layer{layer}_head{head}_heatmap.html",
+        include_plotlyjs="cdn",
+    )
     try:
         render = attention(activations, layer=layer, head=head, tokens=token_labels)
         html = _html_document(_render_to_html(render))

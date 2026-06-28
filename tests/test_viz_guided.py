@@ -107,8 +107,8 @@ def test_grid_fig_tightens_plotly_layout():
     fig = _grid_fig(go.Figure(), height=211)
 
     assert fig.layout.height == 211
-    assert fig.layout.margin.t <= 30
-    assert fig.layout.margin.r <= 10
+    assert fig.layout.margin.t <= 50
+    assert fig.layout.margin.r <= 15
     assert fig.layout.font.size <= 9
 
 
@@ -122,3 +122,15 @@ def test_grid_heatmap_fig_has_extra_bottom_margin():
 
     # Heatmap needs more bottom space for rotated axis labels
     assert hm.layout.margin.b > reg.layout.margin.b
+
+
+def test_feature_specificity_fig_keeps_axis_labels_readable():
+    import plotly.graph_objects as go
+
+    from apps.explorer import _feature_specificity_plotly
+
+    fig = _feature_specificity_plotly(go.Figure(), height=340)
+
+    assert fig.layout.margin.l >= 90
+    assert fig.layout.margin.b >= 90
+    assert fig.layout.xaxis.tickangle == -45

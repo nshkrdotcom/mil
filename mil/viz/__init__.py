@@ -43,6 +43,45 @@ def attention(
     )
 
 
+def attention_heatmap(
+    activations: "ActivationsHandle",
+    layer: int,
+    head: int,
+    tokens: list[str] | None = None,
+    prompt_index: int = 0,
+):
+    go = _go()
+    hook = f"blocks.{layer}.attn.hook_pattern"
+    if hook not in activations._cache:
+        raise ValueError(f"Hook {hook!r} not in activations.")
+    pattern = activations._cache[hook]
+    seq_len = int(pattern.shape[-1])
+    if tokens is None or len(tokens) != seq_len:
+        tokens = [str(i) for i in range(seq_len)]
+    fig = go.Figure(
+        data=[
+            go.Heatmap(
+                z=pattern[prompt_index, head].detach().float().cpu().numpy(),
+                x=tokens,
+                y=tokens,
+                colorscale="Viridis",
+                colorbar={"title": "attention"},
+            )
+        ]
+    )
+    fig = _compact_layout(
+        fig,
+        title=f"Attention pattern: layer {layer}, head {head}",
+        xaxis_title="attends to token",
+        yaxis_title="query token",
+        height=420,
+        margin=dict(l=92, r=18, t=42, b=92),
+    )
+    fig.update_xaxes(tickangle=-35, automargin=True)
+    fig.update_yaxes(automargin=True)
+    return fig
+
+
 def _go():
     _require("plotly")
     import importlib
@@ -94,28 +133,36 @@ def prompt_family_table(prompt_family: dict):
     fig = go.Figure(
         data=[
             go.Table(
+                columnwidth=[0.24, 0.20, 0.34, 0.11, 0.11],
                 header={
                     "values": ["Variant", "Role", "Prompt", "Target", "Foil"],
                     "fill_color": "#1e293b",
-                    "font": {"color": "#e5e7eb", "size": 11},
+                    "font": {"color": "#e5e7eb", "size": 10},
                     "line_color": "rgba(148,163,184,0.2)",
+                    "align": ["left", "left", "left", "left", "left"],
                 },
                 cells={
                     "values": [
-                        [row["label"] for row in rows],
-                        [row.get("role", "") for row in rows],
+                        [_wrap_table_label(row["label"]) for row in rows],
+                        [_wrap_table_label(row.get("role", "")) for row in rows],
                         [row["prompt"] for row in rows],
                         [row.get("target_token", "") for row in rows],
                         [row.get("foil_token", "") for row in rows],
                     ],
                     "fill_color": "#111827",
-                    "font": {"color": "#94a3b8", "size": 10},
+                    "font": {"color": "#94a3b8", "size": 9},
                     "line_color": "rgba(148,163,184,0.12)",
+                    "align": ["left", "left", "left", "left", "left"],
                 },
             )
         ]
     )
     return _compact_layout(fig, title="Prompt family", height=220)
+
+
+def _wrap_table_label(label: str) -> str:
+    words = str(label).replace("_", " ").replace("-", " ").split()
+    return "<br>".join(words)
 
 
 def tokenization_view(tokenization: dict):
@@ -157,6 +204,9 @@ def behavior_logit_bars(behavior: dict):
         y=[row["target_logit"] for row in variants],
         name="target",
         text=[row["target_token"] for row in variants],
+        textposition="inside",
+        insidetextanchor="middle",
+        cliponaxis=False,
         marker_color="#38bdf8",
     )
     fig.add_bar(
@@ -164,6 +214,9 @@ def behavior_logit_bars(behavior: dict):
         y=[row["foil_logit"] for row in variants],
         name="foil",
         text=[row["foil_token"] for row in variants],
+        textposition="inside",
+        insidetextanchor="middle",
+        cliponaxis=False,
         marker_color="#fb7185",
     )
     return _compact_layout(
@@ -228,13 +281,38 @@ def feature_activation_raster(raster: dict):
     fig = go.Figure(
         data=[go.Heatmap(z=z, x=raster["columns"], y=y, colorscale="Viridis")]
     )
-    return _compact_layout(
+    fig = _compact_layout(
         fig,
         title="SAE feature activation raster",
         xaxis_title="prompt variant × token",
         yaxis_title="feature",
-        height=max(300, 22 * len(y)),
+        height=max(440, 26 * len(y)),
+        margin=dict(l=150, r=16, t=42, b=118),
     )
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=raster["columns"],
+        ticktext=[_short_raster_column_label(str(column)) for column in raster["columns"]],
+        tickangle=-45,
+        tickfont=dict(size=8),
+        automargin=True,
+    )
+    fig.update_yaxes(tickfont=dict(size=9), automargin=True)
+    return fig
+
+
+def _short_raster_column_label(label: str) -> str:
+    parts = label.split(":", 2)
+    if len(parts) < 3:
+        return label
+    variant, position, token = parts
+    prefix = {
+        "negated": "neg",
+        "paraphrased_negation": "para",
+        "non_negated_control": "ctrl",
+        "neutral_decoy": "decoy",
+    }.get(variant, variant[:6])
+    return f"{prefix}:{position} {token}"
 
 
 def candidate_control_specificity_plot(specificity: dict):

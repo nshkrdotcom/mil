@@ -1,6 +1,7 @@
 {
   "artifacts": {
     "attention": "attention_layer0_head0.html",
+    "attention_heatmap": "attention_layer0_head0_heatmap.html",
     "behavior_logits": "behavior_logits.json",
     "causal_heatmap": "causal_heatmap.json",
     "causal_heatmap_control": "causal_heatmap_control.html",
@@ -28,7 +29,7 @@
     "sae_id": "blocks.2.hook_resid_post",
     "sae_release": "pythia-70m-deduped-res-sm"
   },
-  "created_at": "2026-06-28T02:17:34.253558+00:00",
+  "created_at": "2026-06-28T03:38:26.928763+00:00",
   "kind": "guided_negation_walkthrough",
   "source": {
     "note": "The guided demo is intentionally small so the first page is immediately useful.",

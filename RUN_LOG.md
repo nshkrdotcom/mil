@@ -371,3 +371,51 @@ Output:
 All checks passed!
 44 passed in 1.01s
 ```
+
+## Scroll rendering fixes
+
+Focused fixes for the guided scroll view:
+
+- Step 3 feature-specificity charts now reserve enough left/bottom margin and rotate labels.
+- The SAE feature raster artifact was rebuilt with readable prompt/token tick labels.
+- Step 6 now prefers a dark Plotly attention heatmap artifact over the CircuitsVis iframe.
+
+Artifact rebuild:
+
+```bash
+.venv/bin/python scripts/build_guided_demo_artifacts.py --device cuda --artifacts-dir artifacts/guided_demo
+```
+
+Key output:
+
+```text
+model_name=pythia-70m-deduped
+hook=blocks.2.hook_resid_post
+device=cuda
+torch.cuda.get_device_capability()=(12, 0)
+first_parameter_device=cuda:0
+feature_status=loaded pythia-70m-deduped-res-sm/blocks.2.hook_resid_post
+manifest=artifacts/guided_demo/demo_manifest.json
+```
+
+Scroll smoke:
+
+```bash
+.venv/bin/streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8501 -- --demo guided --view scroll
+curl -sf http://localhost:8501 -o /dev/null -w '%{http_code}'
+```
+
+Output:
+
+```text
+200
+```
+
+Evidence screenshots:
+
+```text
+artifacts/guided_demo/app_guided_scroll_top_fixed.png
+artifacts/guided_demo/app_guided_step3_fixed.png
+artifacts/guided_demo/app_guided_attention_fixed.png
+artifacts/guided_demo/attention_layer0_head0_heatmap.html
+```

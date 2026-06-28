@@ -256,8 +256,14 @@ hr {
   background: #111827;
   border: 1px solid rgba(148, 163, 184, 0.22);
   border-radius: 9px;
-  padding: 0.34rem 0.48rem;
-  min-height: 46px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 64px;
+  padding: 0.34rem 0.50rem;
+  margin-bottom: 0.50rem;
+  overflow: hidden;
 }
 
 .mil-mini-metric-label {
@@ -267,6 +273,9 @@ hr {
   margin-bottom: 0.16rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mil-mini-metric-value {
@@ -274,6 +283,9 @@ hr {
   font-size: 0.88rem;
   font-weight: 700;
   line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mil-mini-metric-delta {
@@ -284,6 +296,9 @@ hr {
   border-radius: 999px;
   padding: 0.04rem 0.26rem;
   font-size: 0.52rem;
+  line-height: 1;
+  max-width: max-content;
+  white-space: nowrap;
 }
 
 .mil-mini-metric-delta.flagged {
@@ -302,7 +317,9 @@ hr {
   border: 1px solid rgba(148,163,184,0.20);
   border-radius: 10px;
   padding: 0.36rem 0.52rem;
-  margin: 0.20rem 0;
+  margin: 0.38rem 0 0.90rem;
+  position: relative;
+  z-index: 1;
 }
 
 .mil-strip-label {
@@ -332,6 +349,64 @@ hr {
   height: 1px;
   background: rgba(148, 163, 184, 0.18);
   margin: 0.28rem 0;
+}
+
+.mil-grid-drilldown-gap {
+  height: 0.65rem;
+}
+
+.mil-token-panel {
+  background: rgba(17, 24, 39, 0.72);
+  border: 1px solid var(--mil-border);
+  border-radius: 10px;
+  padding: 0.56rem 0.62rem;
+}
+
+.mil-token-row {
+  margin-bottom: 0.48rem;
+}
+
+.mil-token-row:last-child {
+  margin-bottom: 0;
+}
+
+.mil-token-label {
+  color: var(--mil-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.20rem;
+  text-transform: uppercase;
+}
+
+.mil-token-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+}
+
+.mil-token-chip {
+  background: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.20);
+  border-radius: 6px;
+  color: #e5e7eb;
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 1.34rem;
+  padding: 0.12rem 0.32rem;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.mil-token-index {
+  color: var(--mil-accent);
+  font-size: 0.54rem;
+  margin-right: 0.18rem;
+}
+
+.mil-token-text {
+  font-size: 0.68rem;
+  line-height: 1.15;
 }
 </style>
 """
@@ -378,11 +453,11 @@ DENSE_GRID_CSS = """
 }
 
 div[data-testid="stVerticalBlock"] {
-  gap: 0.20rem !important;
+  gap: 0.34rem !important;
 }
 
 div[data-testid="stHorizontalBlock"] {
-  gap: 0.30rem !important;
+  gap: 0.42rem !important;
 }
 
 div[data-testid="column"],
@@ -437,6 +512,24 @@ hr {
 
 .mil-hairline {
   margin: 0.18rem 0;
+}
+
+.mil-mini-metric {
+  height: 64px !important;
+  margin-bottom: 0.56rem !important;
+}
+
+.mil-feature-strip {
+  margin-top: 0.36rem !important;
+  margin-bottom: 0.92rem !important;
+}
+
+.mil-grid-drilldown-gap {
+  height: 0.70rem !important;
+}
+
+[data-testid="stExpander"] {
+  margin-top: 0.22rem !important;
 }
 </style>
 """

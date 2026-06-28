@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import html
 import sys
 from pathlib import Path
 from typing import Any
@@ -119,7 +120,6 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
         patch_before_after,
         prompt_family_table,
         residual_trajectory_2d,
-        tokenization_view,
     )
 
     _render_guided_sidebar_nav(st)
@@ -156,10 +156,7 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
                 width="stretch",
             )
         with col_b:
-            st.plotly_chart(
-                _compact_plotly(tokenization_view(artifacts["tokenization"]), height=210),
-                width="stretch",
-            )
+            _render_tokenization_chips(st, artifacts["tokenization"])
         explain(
             st,
             "Tokenization determines hook positions.  Unequal token lengths are normal; "
@@ -187,8 +184,14 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
         st.dataframe(
             _behavior_table_rows(artifacts["behavior_logits"]),
             width="stretch",
-            height=230,
+            height=260,
             hide_index=True,
+            column_config={
+                "variant": st.column_config.TextColumn("variant", width="medium"),
+                "target": st.column_config.TextColumn("target", width="medium"),
+                "foil": st.column_config.TextColumn("foil", width="medium"),
+                "margin": st.column_config.NumberColumn("margin", width="small"),
+            },
         )
 
     # ── Step 1b: logit lens ───────────────────────────────────────────────
@@ -264,9 +267,9 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
     with feat_tabs[0]:
         if "feature_specificity" in artifacts:
             st.plotly_chart(
-                _compact_plotly(
+                _feature_specificity_plotly(
                     candidate_control_specificity_plot(artifacts["feature_specificity"]),
-                    height=280,
+                    height=340,
                 ),
                 width="stretch",
             )
@@ -346,7 +349,7 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
         "information to a high-effect layer/token cell?",
     )
     with st.expander("Attention pattern viewer", expanded=False):
-        _embed_html(components, artifacts["attention"], height=_HTML_HEIGHT_TALL)
+        _render_attention_artifact(st, components, artifacts, height=_HTML_HEIGHT_TALL)
 
     # ── Step 7: next steps ────────────────────────────────────────────────
     section_kicker(st, "Step 7 — What to try next")
@@ -412,12 +415,12 @@ def render_guided_grid(st: Any, components: Any, artifact_dir: Path) -> None:
     col1, col2, col3 = st.columns(3, gap="small")
     with col1:
         st.plotly_chart(
-            _grid_fig(behavior_logit_bars(artifacts["behavior_logits"]), height=215),
+            _grid_fig(behavior_logit_bars(artifacts["behavior_logits"]), height=245),
             width="stretch",
         )
     with col2:
         st.plotly_chart(
-            _grid_fig(logit_margin_curve(artifacts["logit_lens"]), height=215),
+            _grid_fig(logit_margin_curve(artifacts["logit_lens"]), height=245),
             width="stretch",
         )
     with col3:
@@ -427,7 +430,7 @@ def render_guided_grid(st: Any, components: Any, artifact_dir: Path) -> None:
                     artifacts["causal_heatmap"]["target"],
                     artifacts["causal_heatmap"]["control"],
                 ),
-                height=215,
+                height=245,
             ),
             width="stretch",
         )
@@ -439,7 +442,7 @@ def render_guided_grid(st: Any, components: Any, artifact_dir: Path) -> None:
             st.plotly_chart(
                 _grid_fig(
                     candidate_control_specificity_plot(artifacts["feature_specificity"]),
-                    height=215,
+                    height=245,
                 ),
                 width="stretch",
             )
@@ -447,17 +450,18 @@ def render_guided_grid(st: Any, components: Any, artifact_dir: Path) -> None:
             st.info(Path(artifacts["feature_unavailable"]).read_text(encoding="utf-8"))
     with col5:
         st.plotly_chart(
-            _grid_fig(patch_before_after(artifacts["patch_summary"]), height=215),
+            _grid_fig(patch_before_after(artifacts["patch_summary"]), height=245),
             width="stretch",
         )
     with col6:
         st.plotly_chart(
-            _grid_fig(residual_trajectory_2d(artifacts["residual_trajectory"]), height=215),
+            _grid_fig(residual_trajectory_2d(artifacts["residual_trajectory"]), height=245),
             width="stretch",
         )
 
     # ── Feature extraction strip ──────────────────────────────────────────
     _render_feature_extraction_strip(st, artifacts)
+    _grid_drilldown_gap(st)
 
     # ── Drill-down expander (collapsed by default) ────────────────────────
     with st.expander("Drill-down: attention · full heatmaps · token deltas", expanded=False):
@@ -465,7 +469,7 @@ def render_guided_grid(st: Any, components: Any, artifact_dir: Path) -> None:
             ["Attention", "Causal heatmaps", "Token deltas"]
         )
         with tab_attn:
-            _embed_html(components, artifacts["attention"], height=320)
+            _render_attention_artifact(st, components, artifacts, height=320)
         with tab_heatmaps:
             hm_t, hm_c = st.columns(2, gap="small")
             with hm_t:
@@ -615,6 +619,11 @@ def _hairline(st: Any) -> None:
     st.markdown('<div class="mil-hairline"></div>', unsafe_allow_html=True)
 
 
+def _grid_drilldown_gap(st: Any) -> None:
+    """Reserve vertical space between the feature strip and drill-down expander."""
+    st.markdown('<div class="mil-grid-drilldown-gap"></div>', unsafe_allow_html=True)
+
+
 # ---------------------------------------------------------------------------
 # Data helpers (testable without Streamlit)
 # ---------------------------------------------------------------------------
@@ -665,6 +674,34 @@ def _prompt_family_rows(prompt_family: dict) -> list[dict]:
     ]
 
 
+def _render_tokenization_chips(st: Any, tokenization: dict) -> None:
+    """Render tokenization as wrapped chips instead of a clipped table."""
+    rows = []
+    for variant in tokenization["variants"]:
+        chips = []
+        for index, token in enumerate(variant["tokens"]):
+            chips.append(
+                "<span class='mil-token-chip'> "
+                f"<span class='mil-token-index'>{index}:</span>"
+                f"<span class='mil-token-text'>{html.escape(str(token))}</span>"
+                " </span>"
+            )
+        rows.append(
+            "<div class='mil-token-row'>"
+            f"<div class='mil-token-label'>{html.escape(str(variant['label']))}</div>"
+            f"<div class='mil-token-wrap'>{' '.join(chips)}</div>"
+            "</div>"
+        )
+
+    st.markdown(
+        "<div class='mil-token-panel'>"
+        "<div class='mil-mini-title'>Tokenization by prompt variant</div>"
+        f"{''.join(rows)}"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
 def _compact_plotly(fig: Any, *, height: int = 280, title: str | None = None) -> Any:
     """Apply compact chart sizing for scroll-narrative mode.
 
@@ -698,19 +735,27 @@ def _compact_plotly(fig: Any, *, height: int = 280, title: str | None = None) ->
     return fig
 
 
-def _grid_fig(fig: Any, *, height: int = 215) -> Any:
+def _feature_specificity_plotly(fig: Any, *, height: int = 340) -> Any:
+    fig = _compact_plotly(fig, height=height)
+    fig.update_layout(margin=dict(l=92, r=18, t=42, b=96))
+    fig.update_xaxes(tickangle=-45, tickfont=dict(size=9, color="#94a3b8"), automargin=True)
+    fig.update_yaxes(tickfont=dict(size=9, color="#94a3b8"), automargin=True)
+    return fig
+
+
+def _grid_fig(fig: Any, *, height: int = 245) -> Any:
     """Ultra-tight Plotly layout for dashboard grid cells."""
     fig.update_layout(
         height=height,
-        margin=dict(l=28, r=8, t=26, b=26),
+        margin=dict(l=42, r=14, t=48, b=58),
         font=dict(family="Inter, ui-sans-serif, sans-serif", size=9, color="#e5e7eb"),
         title_font=dict(size=11, color="#e5e7eb"),
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.01,
-            xanchor="right",
-            x=1,
+            yanchor="top",
+            y=-0.22,
+            xanchor="center",
+            x=0.5,
             font=dict(size=8),
         ),
     )
@@ -725,11 +770,11 @@ def _grid_fig(fig: Any, *, height: int = 215) -> Any:
     return fig
 
 
-def _grid_heatmap_fig(fig: Any, *, height: int = 215) -> Any:
+def _grid_heatmap_fig(fig: Any, *, height: int = 245) -> Any:
     """Ultra-tight Plotly layout for heatmaps in dashboard grid."""
     fig.update_layout(
         height=height,
-        margin=dict(l=28, r=8, t=26, b=40),
+        margin=dict(l=44, r=14, t=48, b=64),
         font=dict(family="Inter, ui-sans-serif, sans-serif", size=9, color="#e5e7eb"),
         title_font=dict(size=11, color="#e5e7eb"),
     )
@@ -905,6 +950,22 @@ def _embed_html(
 ) -> None:
     html = Path(path).read_text(encoding="utf-8")
     components.html(html, height=height, scrolling=scrolling)
+
+
+def _render_attention_artifact(
+    st: Any,
+    components: Any,
+    artifacts: dict,
+    *,
+    height: int,
+) -> None:
+    if "attention_heatmap" in artifacts:
+        _embed_html(components, artifacts["attention_heatmap"], height=height)
+        return
+    if "attention_screenshot" in artifacts:
+        st.image(str(artifacts["attention_screenshot"]))
+        return
+    _embed_html(components, artifacts["attention"], height=height)
 
 
 def _require_streamlit():
