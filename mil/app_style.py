@@ -37,6 +37,41 @@ APP_CSS = """
   background: var(--mil-bg);
 }
 
+[data-testid="stHeader"] {
+  height: 44px !important;
+  min-height: 44px !important;
+  background: rgba(11, 15, 23, 0.96) !important;
+  border-bottom: 1px solid var(--mil-border);
+}
+
+[data-testid="stHeader"]::before {
+  content: "mil explorer";
+  position: absolute;
+  left: 0.85rem;
+  top: 0.72rem;
+  color: var(--mil-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-testid="stToolbar"] {
+  height: 44px !important;
+  min-height: 44px !important;
+}
+
+[data-testid="stSidebarHeader"] {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+[data-testid="stSidebarUserContent"] {
+  padding-top: 0.55rem !important;
+}
+
 [data-testid="stSidebar"] {
   background: #111827;
   border-right: 1px solid var(--mil-border);
@@ -55,7 +90,7 @@ APP_CSS = """
 
 .main .block-container,
 [data-testid="stMainBlockContainer"] {
-  padding-top: 0.65rem !important;
+  padding-top: 3.15rem !important;
   padding-bottom: 0.45rem !important;
   padding-left: 0.85rem !important;
   padding-right: 0.85rem !important;
@@ -145,7 +180,7 @@ div[data-testid="stMarkdownContainer"] > p {
   color: var(--mil-muted);
   font-size: 0.74rem;
   line-height: 1.33;
-  margin: 0.12rem 0 0.48rem 0;
+  margin: 0.12rem 0 0.76rem 0;
 }
 
 .mil-callout {
@@ -311,6 +346,11 @@ DENSE_GRID_CSS = """
   height: 0 !important;
   min-height: 0 !important;
   background: transparent !important;
+}
+
+[data-testid="stHeader"]::before {
+  content: none !important;
+  display: none !important;
 }
 
 [data-testid="stToolbar"] {
