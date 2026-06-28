@@ -315,3 +315,59 @@ Output:
 All checks passed!
 31 passed in 0.90s
 ```
+
+## Dense guided dashboard styling
+
+Grid view smoke:
+
+```bash
+.venv/bin/streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8501 -- --demo guided --view grid
+curl -sf http://localhost:8501 -o /dev/null -w '%{http_code}'
+```
+
+Output:
+
+```text
+200
+```
+
+Browser smoke found eight rendered Plotly plots, four compact metric cards, and
+the SAE feature strip before saving:
+
+```text
+artifacts/guided_demo/app_guided_grid_tight.png
+```
+
+Scroll narrative smoke:
+
+```bash
+.venv/bin/streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8502 -- --demo guided --view scroll
+curl -sf http://localhost:8502 -o /dev/null -w '%{http_code}'
+```
+
+Output:
+
+```text
+200
+```
+
+Browser smoke found ten rendered Plotly plots and four native metric cards before
+saving:
+
+```text
+artifacts/guided_demo/app_guided_scroll_compact.png
+```
+
+Final QC after the density pass:
+
+```bash
+.venv/bin/ruff check .
+.venv/bin/python -m pytest
+```
+
+Output:
+
+```text
+All checks passed!
+44 passed in 1.01s
+```

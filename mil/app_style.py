@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 # ---------------------------------------------------------------------------
-# Design tokens and CSS
+# Base design tokens + compact document CSS
 # ---------------------------------------------------------------------------
 
 APP_CSS = """
@@ -31,7 +31,7 @@ APP_CSS = """
   --mil-bad: #fb7185;
 }
 
-/* ── Structural selectors only ── */
+/* ── Structural selectors only — no generated class names ── */
 
 [data-testid="stAppViewContainer"] {
   background: var(--mil-bg);
@@ -40,37 +40,60 @@ APP_CSS = """
 [data-testid="stSidebar"] {
   background: #111827;
   border-right: 1px solid var(--mil-border);
+  min-width: 220px !important;
+  max-width: 265px !important;
 }
 
-.main .block-container {
-  padding-top: 1.4rem;
-  padding-bottom: 1.2rem;
-  max-width: 1500px;
+[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {
+  font-size: 0.70rem !important;
+}
+
+[data-testid="stSidebar"] h3 {
+  font-size: 0.80rem !important;
+  margin-top: 0.55rem !important;
+}
+
+.main .block-container,
+[data-testid="stMainBlockContainer"] {
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.45rem !important;
+  padding-left: 0.85rem !important;
+  padding-right: 0.85rem !important;
+  max-width: 1800px !important;
 }
 
 /* ── Typography ── */
 
 h1 {
-  font-size: 1.65rem !important;
-  line-height: 1.15 !important;
-  margin-bottom: 0.25rem !important;
+  color: var(--mil-text) !important;
+  font-size: 1.55rem !important;
+  line-height: 1.12 !important;
+  margin-bottom: 0.2rem !important;
 }
 
 h2 {
-  font-size: 1.05rem !important;
+  color: var(--mil-text) !important;
+  font-size: 1.0rem !important;
   line-height: 1.2 !important;
-  margin-top: 1.05rem !important;
-  margin-bottom: 0.35rem !important;
+  margin-top: 0.85rem !important;
+  margin-bottom: 0.3rem !important;
 }
 
 h3 {
-  font-size: 0.88rem !important;
-  margin-top: 0.75rem !important;
+  color: var(--mil-text) !important;
+  font-size: 0.85rem !important;
+  margin-top: 0.65rem !important;
+  margin-bottom: 0.2rem !important;
 }
 
 p, li, div[data-testid="stMarkdownContainer"] {
+  color: var(--mil-text);
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+div[data-testid="stMarkdownContainer"] > p {
+  margin-bottom: 0.3rem !important;
 }
 
 /* ── Compact metrics ── */
@@ -79,16 +102,16 @@ p, li, div[data-testid="stMarkdownContainer"] {
   background: var(--mil-panel);
   border: 1px solid var(--mil-border);
   border-radius: 12px;
-  padding: 0.55rem 0.7rem;
+  padding: 0.52rem 0.68rem;
 }
 
 [data-testid="stMetricLabel"] {
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   color: var(--mil-muted);
 }
 
 [data-testid="stMetricValue"] {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
 }
 
 /* ── Semantic panel classes ── */
@@ -97,16 +120,16 @@ p, li, div[data-testid="stMarkdownContainer"] {
   background: var(--mil-panel);
   border: 1px solid var(--mil-border);
   border-radius: 14px;
-  padding: 0.75rem 0.85rem;
-  margin-bottom: 0.7rem;
+  padding: 0.72rem 0.82rem;
+  margin-bottom: 0.65rem;
 }
 
 .mil-card-tight {
   background: var(--mil-panel);
   border: 1px solid var(--mil-border);
   border-radius: 12px;
-  padding: 0.55rem 0.65rem;
-  margin-bottom: 0.55rem;
+  padding: 0.50rem 0.60rem;
+  margin-bottom: 0.50rem;
 }
 
 .mil-section-kicker {
@@ -114,46 +137,60 @@ p, li, div[data-testid="stMarkdownContainer"] {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
-  font-size: 0.62rem;
-  margin-bottom: 0.18rem;
+  font-size: 0.60rem;
+  margin-bottom: 0.15rem;
 }
 
 .mil-explain {
   color: var(--mil-muted);
-  font-size: 0.76rem;
-  line-height: 1.35;
-  margin: 0.15rem 0 0.55rem 0;
+  font-size: 0.74rem;
+  line-height: 1.33;
+  margin: 0.12rem 0 0.48rem 0;
 }
 
 .mil-callout {
   border-left: 3px solid var(--mil-accent);
   background: rgba(56, 189, 248, 0.08);
-  padding: 0.45rem 0.65rem;
+  padding: 0.42rem 0.62rem;
   border-radius: 8px;
   color: var(--mil-text);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+
+.mil-next-list {
+  margin: 0;
+  padding-left: 1.1rem;
 }
 
 .mil-grid-note {
   color: var(--mil-muted);
-  font-size: 0.68rem;
-  line-height: 1.25;
+  font-size: 0.66rem;
+  line-height: 1.22;
+}
+
+.mil-grid-note-top {
+  margin-top: 0.35rem;
 }
 
 /* ── Embedded HTML frames ── */
 
 iframe {
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
-/* ── Tighten default vertical / horizontal gaps ── */
+/* ── Default vertical / horizontal gaps ── */
 
 div[data-testid="stVerticalBlock"] {
-  gap: 0.45rem;
+  gap: 0.38rem;
 }
 
 div[data-testid="stHorizontalBlock"] {
-  gap: 0.65rem;
+  gap: 0.55rem;
+}
+
+hr {
+  margin: 0.45rem 0 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
 }
 
 /* ── Tables / dataframes ── */
@@ -163,26 +200,203 @@ div[data-testid="stHorizontalBlock"] {
   overflow: hidden;
 }
 
-/* ── Dashboard ("grid") mode shell ── */
-
-.mil-dashboard-shell {
-  height: calc(100vh - 5.2rem);
-  overflow: hidden;
-}
-
-/* ── Typography helpers used in HTML panels ── */
+/* ── Typography helpers ── */
 
 .mil-mini-title {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.22rem;
   color: var(--mil-text);
 }
 
 .mil-mini-copy {
   color: var(--mil-muted);
-  font-size: 0.66rem;
-  line-height: 1.25;
+  font-size: 0.64rem;
+  line-height: 1.22;
+}
+
+/* ── Custom mini metric cards (used in compact=True summary row) ── */
+
+.mil-mini-metric {
+  background: #111827;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 9px;
+  padding: 0.34rem 0.48rem;
+  min-height: 46px;
+}
+
+.mil-mini-metric-label {
+  color: #94a3b8;
+  font-size: 0.58rem;
+  line-height: 1;
+  margin-bottom: 0.16rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mil-mini-metric-value {
+  color: #e5e7eb;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mil-mini-metric-delta {
+  display: inline-block;
+  margin-top: 0.16rem;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border-radius: 999px;
+  padding: 0.04rem 0.26rem;
+  font-size: 0.52rem;
+}
+
+.mil-mini-metric-delta.flagged {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.12);
+}
+
+/* ── Feature extraction strip ── */
+
+.mil-feature-strip {
+  display: grid;
+  grid-template-columns: 1.1fr 0.8fr 0.9fr 2.4fr;
+  gap: 0.44rem;
+  align-items: center;
+  background: linear-gradient(90deg, rgba(52,211,153,0.09), rgba(56,189,248,0.05));
+  border: 1px solid rgba(148,163,184,0.20);
+  border-radius: 10px;
+  padding: 0.36rem 0.52rem;
+  margin: 0.20rem 0;
+}
+
+.mil-strip-label {
+  color: #94a3b8;
+  font-size: 0.52rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.10rem;
+}
+
+.mil-strip-main,
+.mil-strip-value {
+  color: #e5e7eb;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.mil-strip-note {
+  color: #94a3b8;
+  font-size: 0.60rem;
+  line-height: 1.18;
+}
+
+/* ── Hairline divider ── */
+
+.mil-hairline {
+  height: 1px;
+  background: rgba(148, 163, 184, 0.18);
+  margin: 0.28rem 0;
+}
+</style>
+"""
+
+# ---------------------------------------------------------------------------
+# Dense overlay CSS — injected ONLY in dashboard grid mode
+# ---------------------------------------------------------------------------
+
+DENSE_GRID_CSS = """
+<style>
+[data-testid="stHeader"] {
+  height: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
+}
+
+[data-testid="stToolbar"] {
+  display: none !important;
+}
+
+[data-testid="stSidebarHeader"] {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+[data-testid="stSidebarUserContent"] {
+  padding-top: 0.42rem !important;
+}
+
+.main .block-container,
+[data-testid="stMainBlockContainer"] {
+  padding-top: 0.38rem !important;
+  padding-bottom: 0.20rem !important;
+  padding-left: 0.55rem !important;
+  padding-right: 0.55rem !important;
+  max-width: none !important;
+}
+
+div[data-testid="stVerticalBlock"] {
+  gap: 0.20rem !important;
+}
+
+div[data-testid="stHorizontalBlock"] {
+  gap: 0.30rem !important;
+}
+
+div[data-testid="column"],
+div[data-testid="stColumn"] {
+  padding-left: 0.10rem !important;
+  padding-right: 0.10rem !important;
+}
+
+[data-testid="stMetric"] {
+  padding: 0.34rem 0.48rem !important;
+  min-height: 50px !important;
+}
+
+[data-testid="stMetricLabel"] {
+  font-size: 0.60rem !important;
+}
+
+[data-testid="stMetricValue"] {
+  font-size: 0.88rem !important;
+}
+
+h1 {
+  font-size: 1.22rem !important;
+  margin-bottom: 0.10rem !important;
+}
+
+h2, h3 {
+  margin-top: 0.28rem !important;
+  margin-bottom: 0.14rem !important;
+  font-size: 0.82rem !important;
+}
+
+.mil-section-kicker {
+  font-size: 0.52rem !important;
+  margin-bottom: 0.06rem !important;
+  margin-top: 0.18rem !important;
+}
+
+.mil-explain {
+  font-size: 0.64rem !important;
+  line-height: 1.20 !important;
+  margin: 0.04rem 0 0.20rem 0 !important;
+}
+
+div[data-testid="stMarkdownContainer"] > p {
+  margin-bottom: 0.18rem !important;
+}
+
+hr {
+  margin: 0.28rem 0 !important;
+}
+
+.mil-hairline {
+  margin: 0.18rem 0;
 }
 </style>
 """
@@ -193,8 +407,48 @@ div[data-testid="stHorizontalBlock"] {
 
 
 def apply_app_style(st: Any) -> None:
-    """Inject the shared CSS into the Streamlit app.  Call once, near the top."""
+    """Inject the shared base CSS. Call once after set_page_config."""
     st.markdown(APP_CSS, unsafe_allow_html=True)
+
+
+def apply_dense_grid_style(st: Any) -> None:
+    """Inject the ultra-dense overlay CSS for dashboard grid mode.
+
+    Must be called *after* apply_app_style so the overrides win.
+    """
+    st.markdown(DENSE_GRID_CSS, unsafe_allow_html=True)
+
+
+def mini_metrics(st: Any, metrics: list[dict[str, str]]) -> None:
+    """Render a row of compact custom metric cards.
+
+    Parameters
+    ----------
+    st:
+        The Streamlit module.
+    metrics:
+        List of dicts with keys: ``label``, ``value``, and optional ``delta``
+        and ``delta_bad`` (bool; turns the delta pill red when True).
+    """
+    cols = st.columns(len(metrics), gap="small")
+    for col, metric in zip(cols, metrics, strict=True):
+        with col:
+            delta = metric.get("delta", "")
+            is_bad = metric.get("delta_bad", False)
+            delta_class = "mil-mini-metric-delta flagged" if is_bad else "mil-mini-metric-delta"
+            delta_html = (
+                f'<span class="{delta_class}">{delta}</span>' if delta else ""
+            )
+            col.markdown(
+                f"""
+                <div class="mil-mini-metric">
+                  <div class="mil-mini-metric-label">{metric["label"]}</div>
+                  <div class="mil-mini-metric-value">{metric["value"]}</div>
+                  {delta_html}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def card(
@@ -205,22 +459,7 @@ def card(
     kicker: str | None = None,
     tight: bool = False,
 ) -> None:
-    """Render a styled information card panel.
-
-    Parameters
-    ----------
-    st:
-        The Streamlit module (passed in to keep this function testable without
-        importing streamlit at module level).
-    title:
-        Card heading text.
-    body:
-        Optional muted explanatory paragraph rendered below the title.
-    kicker:
-        Optional uppercase accent label rendered above the title.
-    tight:
-        When True use the compact ``.mil-card-tight`` variant.
-    """
+    """Render a styled information card panel."""
     css_class = "mil-card-tight" if tight else "mil-card"
     kicker_html = (
         f'<div class="mil-section-kicker">{kicker}</div>' if kicker else ""

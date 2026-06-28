@@ -62,6 +62,7 @@ def test_readme_guided_command_paths_exist():
 
     assert "./scripts/bootstrap_uv.sh" in text
     assert ".venv/bin/streamlit run apps/explorer.py -- --demo guided" in text
+    assert ".venv/bin/streamlit run apps/explorer.py -- --demo guided --view grid" in text
     assert Path("scripts/bootstrap_uv.sh").exists()
     assert Path("apps/explorer.py").exists()
 
@@ -91,3 +92,82 @@ def test_causal_difference_pads_and_subtracts():
     diff = causal_difference(target, control)
 
     assert diff == [[0.5, 1.0, None], [0.25, 0.25, None]]
+
+
+def test_parse_app_args_accepts_grid_view():
+    from apps.explorer import parse_app_args
+
+    args = parse_app_args(["--demo", "guided", "--view", "grid"])
+
+    assert args.demo == "guided"
+    assert args.view == "grid"
+
+
+def test_parse_app_args_scroll_is_default():
+    from apps.explorer import parse_app_args
+
+    args = parse_app_args([])
+
+    assert args.view == "scroll"
+
+
+def test_render_guided_summary_supports_compact_signature():
+    import inspect
+
+    from apps.explorer import _render_guided_summary
+
+    sig = inspect.signature(_render_guided_summary)
+    assert "compact" in sig.parameters
+
+
+def test_behavior_table_rows_are_compact():
+    from apps.explorer import _behavior_table_rows
+
+    rows = _behavior_table_rows(
+        {
+            "variants": [
+                {
+                    "label": "negated",
+                    "target_token": " negative",
+                    "foil_token": " positive",
+                    "margin": 0.84676,
+                }
+            ]
+        }
+    )
+
+    assert rows == [
+        {
+            "variant": "negated",
+            "target": " negative",
+            "foil": " positive",
+            "margin": 0.847,
+        }
+    ]
+
+
+def test_feature_strip_summary_separates_candidate_and_control():
+    from apps.explorer import _feature_strip_summary
+
+    summary = _feature_strip_summary(
+        {
+            "rows": [
+                {"kind": "candidate", "feature_id": 1, "contrast": 3.5},
+                {"kind": "density_control", "feature_id": 2, "contrast": 0.2},
+            ]
+        }
+    )
+
+    assert summary["best_feature_id"] == "1"
+    assert summary["best_contrast"] == "3.50"
+    assert summary["control_max"] == "0.20"
+
+
+def test_feature_strip_summary_handles_no_candidates():
+    from apps.explorer import _feature_strip_summary
+
+    summary = _feature_strip_summary({"rows": []})
+
+    assert summary["best_feature_id"] == "—"
+    assert summary["best_contrast"] == "—"
+    assert summary["control_max"] == "0.00"

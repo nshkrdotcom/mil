@@ -228,13 +228,13 @@ def feature_activation_raster(raster: dict):
     fig = go.Figure(
         data=[go.Heatmap(z=z, x=raster["columns"], y=y, colorscale="Viridis")]
     )
-    fig.update_layout(
+    return _compact_layout(
+        fig,
         title="SAE feature activation raster",
-        xaxis_title="prompt variant x token",
+        xaxis_title="prompt variant × token",
         yaxis_title="feature",
-        height=max(420, 24 * len(y)),
+        height=max(300, 22 * len(y)),
     )
-    return fig
 
 
 def candidate_control_specificity_plot(specificity: dict):

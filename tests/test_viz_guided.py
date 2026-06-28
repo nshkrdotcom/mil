@@ -85,3 +85,40 @@ def test_feature_raster_preserves_feature_ids_and_prompt_variants():
 
     assert list(fig.data[0].y) == ["candidate 7", "density_control 11"]
     assert list(fig.data[0].x) == ["negated:0", "control:0"]
+
+
+def test_compact_plotly_sets_height_and_margin():
+    import plotly.graph_objects as go
+
+    from apps.explorer import _compact_plotly
+
+    fig = _compact_plotly(go.Figure(), height=321)
+
+    assert fig.layout.height == 321
+    assert fig.layout.margin.t <= 50
+    assert fig.layout.margin.r <= 25
+
+
+def test_grid_fig_tightens_plotly_layout():
+    import plotly.graph_objects as go
+
+    from apps.explorer import _grid_fig
+
+    fig = _grid_fig(go.Figure(), height=211)
+
+    assert fig.layout.height == 211
+    assert fig.layout.margin.t <= 30
+    assert fig.layout.margin.r <= 10
+    assert fig.layout.font.size <= 9
+
+
+def test_grid_heatmap_fig_has_extra_bottom_margin():
+    import plotly.graph_objects as go
+
+    from apps.explorer import _grid_fig, _grid_heatmap_fig
+
+    hm = _grid_heatmap_fig(go.Figure(), height=215)
+    reg = _grid_fig(go.Figure(), height=215)
+
+    # Heatmap needs more bottom space for rotated axis labels
+    assert hm.layout.margin.b > reg.layout.margin.b

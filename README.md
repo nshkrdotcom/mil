@@ -67,6 +67,14 @@ causal heatmaps, SAE feature specificity, intervention deltas, residual
 trajectory geometry, and attention drill-down already populated from
 `artifacts/guided_demo/`.
 
+For the dense presentation dashboard:
+
+```bash
+.venv/bin/streamlit run apps/explorer.py -- --demo guided --view grid
+```
+
+For the compact scroll narrative:
+
 ```bash
 .venv/bin/streamlit run apps/explorer.py -- --demo guided
 ```
@@ -74,7 +82,7 @@ trajectory geometry, and attention drill-down already populated from
 For WSL browser access with explicit binding and port:
 
 ```bash
-.venv/bin/streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8501 -- --demo guided
+.venv/bin/streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8501 -- --demo guided --view grid
 ```
 
 Open from Windows:

@@ -27,8 +27,13 @@ DEFAULT_SAE_RELEASE = "pythia-70m-deduped-res-sm"
 
 # Heights used for embedded HTML artifacts.
 _HTML_HEIGHT_COMPACT = 300
-_HTML_HEIGHT_NORMAL = 420
-_HTML_HEIGHT_TALL = 520
+_HTML_HEIGHT_NORMAL = 380
+_HTML_HEIGHT_TALL = 440
+
+
+# ---------------------------------------------------------------------------
+# Entry points
+# ---------------------------------------------------------------------------
 
 
 def load_guided_artifacts(artifact_dir: str | Path = GUIDED_DEMO_DIR) -> dict:
@@ -88,10 +93,13 @@ def main(argv: list[str] | None = None) -> None:
     # ── Route ─────────────────────────────────────────────────────────────
     if mode == "Guided negation walkthrough":
         if view == "Dashboard grid":
+            _set_density_mode(st, "grid")
             render_guided_grid(st, components, Path(args.artifacts_dir))
         else:
+            _set_density_mode(st, "scroll")
             render_guided_walkthrough(st, components, Path(args.artifacts_dir))
     else:
+        _set_density_mode(st, "scroll")
         render_free_exploration(st, components)
 
 
@@ -120,8 +128,7 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
     if artifacts is None:
         return
 
-    manifest = artifacts["manifest"]
-    cfg = manifest["config"]
+    cfg = artifacts["manifest"]["config"]
 
     # ── Header ────────────────────────────────────────────────────────────
     st.title("Guided SELF-GROUND negation walkthrough")
@@ -136,27 +143,27 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
     st.subheader("What question are we asking?")
     explain(
         st,
-        "We want to see whether the model has internal components that distinguish a "
-        "negated statement from a non-negated control, and whether those components "
-        "affect the next-token prediction. Controls matter: a component that also "
-        "moves matched non-negated prompts is less specific to negation.",
+        "Does the model have internal components that distinguish a negated statement "
+        "from a non-negated control, and do those components causally affect next-token "
+        "prediction? Controls narrow the search: a component that fires on both negated "
+        "and non-negated prompts is less specific to negation.",
     )
     with st.expander("Prompt family & tokenization", expanded=True):
         col_a, col_b = st.columns(2)
         with col_a:
             st.plotly_chart(
-                prompt_family_table(artifacts["prompt_family"]),
-                use_container_width=True,
+                _compact_plotly(prompt_family_table(artifacts["prompt_family"]), height=210),
+                width="stretch",
             )
         with col_b:
             st.plotly_chart(
-                tokenization_view(artifacts["tokenization"]),
-                use_container_width=True,
+                _compact_plotly(tokenization_view(artifacts["tokenization"]), height=210),
+                width="stretch",
             )
         explain(
             st,
-            "Tokenization determines the positions available for hooks and interventions. "
-            "Unequal token lengths are normal; compare positions by label and context.",
+            "Tokenization determines hook positions.  Unequal token lengths are normal; "
+            "compare positions by label and context, not column number.",
         )
 
     # ── Step 1: behavior ──────────────────────────────────────────────────
@@ -164,122 +171,169 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
     st.subheader("What does the model predict?")
     explain(
         st,
-        "The behavioral readout is a target-vs-foil logit margin.  A positive margin "
-        "means the model assigns the target token a higher next-token logit than the foil.",
+        "<b>What it shows:</b> target-vs-foil logit margin — positive means the model "
+        "predicts the target token over the foil.  "
+        "<b>Why it matters:</b> later interventions try to move this margin.  "
+        "<b>What supports the hypothesis:</b> negated prompts show a clear positive margin "
+        "while controls show the opposite.",
     )
-    col_beh, col_lens = st.columns(2)
+    col_beh, col_lens = st.columns([1.3, 1])
     with col_beh:
         st.plotly_chart(
-            behavior_logit_bars(artifacts["behavior_logits"]),
-            use_container_width=True,
+            _compact_plotly(behavior_logit_bars(artifacts["behavior_logits"]), height=280),
+            width="stretch",
         )
     with col_lens:
-        st.plotly_chart(
-            logit_margin_curve(artifacts["logit_lens"]),
-            use_container_width=True,
+        st.dataframe(
+            _behavior_table_rows(artifacts["behavior_logits"]),
+            width="stretch",
+            height=230,
+            hide_index=True,
         )
+
+    # ── Step 1b: logit lens ───────────────────────────────────────────────
+    section_kicker(st, "Step 1b — Depth readout")
+    st.subheader("Where in the network does the answer emerge?")
+    explain(
+        st,
+        "<b>What it shows:</b> logit-lens projects intermediate residual streams through "
+        "the final unembedding, suggesting depths where the readout becomes linearly "
+        "available.  <b>Caution:</b> this is not proof of a mechanism — it tells you "
+        "where to start looking.",
+    )
+    st.plotly_chart(
+        _compact_plotly(logit_margin_curve(artifacts["logit_lens"]), height=280),
+        width="stretch",
+    )
 
     # ── Step 2: causal localization ───────────────────────────────────────
     section_kicker(st, "Step 2 — Causal localization")
     st.subheader("Where is the causal effect localized?")
     explain(
         st,
-        "These heatmaps ablate one residual-stream layer/token cell at a time and "
-        "measure the change in the behavioral margin.  Strong target effects absent "
-        "from controls are better candidate sites for mechanism work.",
+        "<b>What it shows:</b> ablation of one residual-stream layer/token cell and "
+        "the resulting change in behavioral margin.  "
+        "<b>What supports the hypothesis:</b> a strong target effect absent from controls.  "
+        "<b>What weakens it:</b> a similarly strong effect in the control heatmap.",
     )
-    col_t, col_c, col_d = st.columns(3)
-    with col_t:
+    tab_target, tab_control, tab_diff, tab_interp = st.tabs(
+        ["Target", "Control", "Target − Control", "How to read it"]
+    )
+    with tab_target:
         st.plotly_chart(
-            causal_heatmap(artifacts["causal_heatmap"]["target"], "Target"),
-            use_container_width=True,
+            _compact_plotly(causal_heatmap(artifacts["causal_heatmap"]["target"], "Target"), height=300),
+            width="stretch",
         )
-    with col_c:
+    with tab_control:
         st.plotly_chart(
-            causal_heatmap(artifacts["causal_heatmap"]["control"], "Control"),
-            use_container_width=True,
+            _compact_plotly(causal_heatmap(artifacts["causal_heatmap"]["control"], "Control"), height=300),
+            width="stretch",
         )
-    with col_d:
+    with tab_diff:
         st.plotly_chart(
-            causal_difference_heatmap(
-                artifacts["causal_heatmap"]["target"],
-                artifacts["causal_heatmap"]["control"],
+            _compact_plotly(
+                causal_difference_heatmap(
+                    artifacts["causal_heatmap"]["target"],
+                    artifacts["causal_heatmap"]["control"],
+                ),
+                height=300,
             ),
-            use_container_width=True,
+            width="stretch",
+        )
+    with tab_interp:
+        callout(
+            st,
+            "<b>How to read the causal heatmaps:</b> each cell is one (layer, token-position) "
+            "ablation.  Red = ablation reduces the target margin (the site contributes positively "
+            "to the negation signal).  Blue = ablation increases the margin.  "
+            "The difference heatmap subtracts the control from the target — high positive cells "
+            "that disappear in the difference are not negation-specific.",
         )
 
     # ── Step 3: feature specificity ───────────────────────────────────────
-    section_kicker(st, "Step 3 — Feature specificity")
-    st.subheader("Which features/components are specific?")
+    section_kicker(st, "Step 3 — SAE feature specificity")
+    st.subheader("Which SAE features are specific to negation?")
     explain(
         st,
-        "A feature is more interesting if it fires on negation and paraphrased "
-        "negation but not on matched non-negated or decoy prompts.",
+        "<b>What supports the hypothesis:</b> candidate features fire on negated and "
+        "paraphrased-negation tokens but not on non-negated controls or decoys.  "
+        "<b>What weakens it:</b> density-matched controls showing the same pattern.",
     )
-    if "feature_specificity" in artifacts:
-        col_spec, col_raster = st.columns([1, 2])
-        with col_spec:
+
+    feat_tabs = st.tabs(["Candidate contrast", "Feature raster", "How to read it"])
+    with feat_tabs[0]:
+        if "feature_specificity" in artifacts:
             st.plotly_chart(
-                candidate_control_specificity_plot(artifacts["feature_specificity"]),
-                use_container_width=True,
+                _compact_plotly(
+                    candidate_control_specificity_plot(artifacts["feature_specificity"]),
+                    height=280,
+                ),
+                width="stretch",
             )
-        with col_raster:
-            if "feature_raster" in artifacts:
-                with st.expander("Feature activation raster", expanded=True):
-                    _embed_html(
-                        components, artifacts["feature_raster"], height=_HTML_HEIGHT_NORMAL
-                    )
-    elif "feature_unavailable" in artifacts:
-        st.info(Path(artifacts["feature_unavailable"]).read_text(encoding="utf-8"))
+        elif "feature_unavailable" in artifacts:
+            st.info(Path(artifacts["feature_unavailable"]).read_text(encoding="utf-8"))
+    with feat_tabs[1]:
+        if "feature_raster" in artifacts:
+            _embed_html(components, artifacts["feature_raster"], height=_HTML_HEIGHT_NORMAL)
+        else:
+            st.info("Feature raster not available.")
+    with feat_tabs[2]:
+        callout(
+            st,
+            "<b>How to read this:</b> each row is an SAE feature.  Candidate rows should light "
+            "up on negated and paraphrased-negation tokens more than on non-negated or decoy "
+            "tokens.  Density controls are included so a high activation alone does not look "
+            "meaningful — the contrast relative to matched controls is what matters.",
+        )
 
     if "feature_table" in artifacts:
         with st.expander("Feature table (top candidates)", expanded=False):
-            _embed_html(
-                components, artifacts["feature_table"], height=_HTML_HEIGHT_COMPACT
-            )
+            _embed_html(components, artifacts["feature_table"], height=_HTML_HEIGHT_COMPACT)
 
     # ── Step 4: intervention ──────────────────────────────────────────────
     section_kicker(st, "Step 4 — Intervention")
     st.subheader("What changes when we intervene?")
     explain(
         st,
-        "Interventions move the analysis from correlation toward causality.  "
-        "The clean margin is compared with the margin after ablating the selected "
-        "residual-stream site.  Top-token deltas show broader side effects.",
+        "<b>What it shows:</b> the logit margin before vs. after ablating the selected "
+        "residual-stream site.  "
+        "<b>Why it matters:</b> this moves the analysis from correlation toward causality.  "
+        "<b>Control leakiness</b> ratio tests whether the ablation is specific.",
     )
     report = artifacts["patch_summary"]["control_report"]
-    control_message = (
-        f"Control leakiness ratio {report['ratio']:.3f} — "
-        f"control max {report['control_max']:.4f}, target delta {report['target_delta']:.4f}"
-    )
+    ratio_str = f"{report['ratio']:.3f}"
+    ctrl_max = f"{report['control_max']:.4f}"
+    tgt_delta = f"{report['target_delta']:.4f}"
+    ctrl_msg = f"ratio {ratio_str} · control max {ctrl_max} · target delta {tgt_delta}"
     if report["flagged"]:
-        st.error(f"FLAGGED · {control_message}")
+        st.error(f"FLAGGED · {ctrl_msg}")
     else:
-        st.info(f"Controls below threshold · {control_message}")
+        st.info(f"Controls below threshold · {ctrl_msg}")
 
-    col_patch, col_deltas = st.columns([1, 2])
-    with col_patch:
+    int_tabs = st.tabs(["Clean vs ablated", "Token deltas", "Control report"])
+    with int_tabs[0]:
         st.plotly_chart(
-            patch_before_after(artifacts["patch_summary"]),
-            use_container_width=True,
+            _compact_plotly(patch_before_after(artifacts["patch_summary"]), height=280),
+            width="stretch",
         )
-    with col_deltas:
-        with st.expander("Token-level logit deltas", expanded=True):
-            _embed_html(
-                components, artifacts["token_deltas"], height=_HTML_HEIGHT_TALL
-            )
+    with int_tabs[1]:
+        _embed_html(components, artifacts["token_deltas"], height=_HTML_HEIGHT_NORMAL)
+    with int_tabs[2]:
+        st.json(report)
 
     # ── Step 5: geometry ──────────────────────────────────────────────────
     section_kicker(st, "Step 5 — Geometry (optional)")
     st.subheader("How do representations move through depth?")
     explain(
         st,
-        "The trajectory view projects selected residual-stream states into one shared "
-        "PCA basis.  Geometry views are diagnostic, not standalone proof.",
+        "<b>What it shows:</b> residual-stream states projected into one shared PCA basis.  "
+        "<b>Caution:</b> geometry views are diagnostic, not standalone proof.  "
+        "<b>What to look for:</b> prompt variants that separate over depth before "
+        "committing to more expensive interventions.",
     )
     st.plotly_chart(
-        residual_trajectory_2d(artifacts["residual_trajectory"]),
-        use_container_width=True,
+        _compact_plotly(residual_trajectory_2d(artifacts["residual_trajectory"]), height=300),
+        width="stretch",
     )
 
     # ── Step 6: attention ─────────────────────────────────────────────────
@@ -287,17 +341,18 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
     st.subheader("Attention drill-down")
     explain(
         st,
-        "Attention patterns are not explanations by themselves.  Use them after "
-        "causal localization to inspect routing hypotheses.",
+        "Attention patterns are not explanations by themselves.  Use them after causal "
+        "localization to inspect routing hypotheses: which source tokens could be supplying "
+        "information to a high-effect layer/token cell?",
     )
-    with st.expander("Attention pattern viewer", expanded=True):
+    with st.expander("Attention pattern viewer", expanded=False):
         _embed_html(components, artifacts["attention"], height=_HTML_HEIGHT_TALL)
 
     # ── Step 7: next steps ────────────────────────────────────────────────
     section_kicker(st, "Step 7 — What to try next")
     callout(
         st,
-        "<ul style='margin:0;padding-left:1.1rem;'>"
+        "<ul class='mil-next-list'>"
         "<li>Change prompt family — compare lexical vs paraphrased negation.</li>"
         "<li>Inspect the highest-effect cells in the layer/token causal heatmap.</li>"
         "<li>Switch hooks and rerun with matched controls.</li>"
@@ -314,7 +369,17 @@ def render_guided_walkthrough(st: Any, components: Any, artifact_dir: Path) -> N
 
 def render_guided_grid(st: Any, components: Any, artifact_dir: Path) -> None:
     """Above-the-fold dense overview for live demos / presentations."""
-    from mil.app_style import explain, section_kicker
+    from mil.app_style import apply_dense_grid_style
+
+    apply_dense_grid_style(st)
+    _render_guided_sidebar_nav(st)
+
+    artifacts = _load_artifacts_or_error(st, artifact_dir)
+    if artifacts is None:
+        return
+
+    cfg = artifacts["manifest"]["config"]
+
     from mil.viz import (
         behavior_logit_bars,
         candidate_control_specificity_plot,
@@ -325,89 +390,102 @@ def render_guided_grid(st: Any, components: Any, artifact_dir: Path) -> None:
         residual_trajectory_2d,
     )
 
-    _render_guided_sidebar_nav(st)
+    # ── Compact header row ────────────────────────────────────────────────
+    title_col, meta_col = st.columns([1.1, 2.9], gap="small")
+    with title_col:
+        st.markdown("## Guided negation walkthrough")
+    with meta_col:
+        st.markdown(
+            f'<div class="mil-grid-note mil-grid-note-top">'
+            f'Precomputed · <code>{cfg["model_name"]}</code> · '
+            f'<code>{cfg["hook"]}</code> · '
+            f'<code>{cfg["sae_release"]}/{cfg["sae_id"]}</code>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
-    artifacts = _load_artifacts_or_error(st, artifact_dir)
-    if artifacts is None:
-        return
+    # ── Mini metrics ──────────────────────────────────────────────────────
+    _render_guided_summary(st, artifacts, compact=True)
+    _hairline(st)
 
-    manifest = artifacts["manifest"]
-    cfg = manifest["config"]
-
-    st.title("Guided negation walkthrough")
-    st.caption(
-        f"Precomputed · `{cfg['model_name']}` · `{cfg['hook']}` · "
-        f"`{cfg['sae_release']}/{cfg['sae_id']}`"
-    )
-    _render_guided_summary(st, artifacts)
-
-    st.divider()
-
-    # ── Row 1: Behavior + Logit lens + Causal difference ─────────────────
-    section_kicker(st, "Behavior · Emergence · Localization")
-    col1, col2, col3 = st.columns(3)
+    # ── Row 1: Behavior · Logit-lens · Target−Control causal heatmap ─────
+    col1, col2, col3 = st.columns(3, gap="small")
     with col1:
         st.plotly_chart(
-            behavior_logit_bars(artifacts["behavior_logits"]),
-            use_container_width=True,
+            _grid_fig(behavior_logit_bars(artifacts["behavior_logits"]), height=215),
+            width="stretch",
         )
     with col2:
         st.plotly_chart(
-            logit_margin_curve(artifacts["logit_lens"]),
-            use_container_width=True,
+            _grid_fig(logit_margin_curve(artifacts["logit_lens"]), height=215),
+            width="stretch",
         )
     with col3:
         st.plotly_chart(
-            causal_difference_heatmap(
-                artifacts["causal_heatmap"]["target"],
-                artifacts["causal_heatmap"]["control"],
+            _grid_heatmap_fig(
+                causal_difference_heatmap(
+                    artifacts["causal_heatmap"]["target"],
+                    artifacts["causal_heatmap"]["control"],
+                ),
+                height=215,
             ),
-            use_container_width=True,
+            width="stretch",
         )
 
-    # ── Row 2: Feature specificity + Intervention + Geometry ──────────────
-    section_kicker(st, "Feature specificity · Intervention · Geometry")
-    col4, col5, col6 = st.columns(3)
+    # ── Row 2: SAE specificity · Intervention · Residual trajectory ───────
+    col4, col5, col6 = st.columns(3, gap="small")
     with col4:
         if "feature_specificity" in artifacts:
             st.plotly_chart(
-                candidate_control_specificity_plot(artifacts["feature_specificity"]),
-                use_container_width=True,
+                _grid_fig(
+                    candidate_control_specificity_plot(artifacts["feature_specificity"]),
+                    height=215,
+                ),
+                width="stretch",
             )
         elif "feature_unavailable" in artifacts:
             st.info(Path(artifacts["feature_unavailable"]).read_text(encoding="utf-8"))
     with col5:
         st.plotly_chart(
-            patch_before_after(artifacts["patch_summary"]),
-            use_container_width=True,
+            _grid_fig(patch_before_after(artifacts["patch_summary"]), height=215),
+            width="stretch",
         )
     with col6:
         st.plotly_chart(
-            residual_trajectory_2d(artifacts["residual_trajectory"]),
-            use_container_width=True,
+            _grid_fig(residual_trajectory_2d(artifacts["residual_trajectory"]), height=215),
+            width="stretch",
         )
 
-    # ── Row 3: Detail tabs (attention + causal heatmaps + token deltas) ───
-    st.divider()
-    tab_attn, tab_heatmaps, tab_tokens = st.tabs(
-        ["Attention", "Causal heatmaps", "Token deltas"]
-    )
-    with tab_attn:
-        _embed_html(components, artifacts["attention"], height=_HTML_HEIGHT_TALL)
-    with tab_heatmaps:
-        hm_t, hm_c = st.columns(2)
-        with hm_t:
-            st.plotly_chart(
-                causal_heatmap(artifacts["causal_heatmap"]["target"], "Target"),
-                use_container_width=True,
-            )
-        with hm_c:
-            st.plotly_chart(
-                causal_heatmap(artifacts["causal_heatmap"]["control"], "Control"),
-                use_container_width=True,
-            )
-    with tab_tokens:
-        _embed_html(components, artifacts["token_deltas"], height=_HTML_HEIGHT_TALL)
+    # ── Feature extraction strip ──────────────────────────────────────────
+    _render_feature_extraction_strip(st, artifacts)
+
+    # ── Drill-down expander (collapsed by default) ────────────────────────
+    with st.expander("Drill-down: attention · full heatmaps · token deltas", expanded=False):
+        tab_attn, tab_heatmaps, tab_tokens = st.tabs(
+            ["Attention", "Causal heatmaps", "Token deltas"]
+        )
+        with tab_attn:
+            _embed_html(components, artifacts["attention"], height=320)
+        with tab_heatmaps:
+            hm_t, hm_c = st.columns(2, gap="small")
+            with hm_t:
+                st.plotly_chart(
+                    _grid_heatmap_fig(
+                        causal_heatmap(artifacts["causal_heatmap"]["target"], "Target"),
+                        height=230,
+                    ),
+                    width="stretch",
+                )
+            with hm_c:
+                st.plotly_chart(
+                    _grid_heatmap_fig(
+                        causal_heatmap(artifacts["causal_heatmap"]["control"], "Control"),
+                        height=230,
+                    ),
+                    width="stretch",
+                )
+        with tab_tokens:
+            _embed_html(components, artifacts["token_deltas"], height=320)
 
 
 # ---------------------------------------------------------------------------
@@ -421,11 +499,11 @@ def _render_guided_sidebar_nav(st: Any) -> None:
         for label, anchor in [
             ("1. Behavior", "what-does-the-model-predict"),
             ("2. Localization", "where-is-the-causal-effect-localized"),
-            ("3. Feature specificity", "which-features-components-are-specific"),
+            ("3. Feature specificity", "which-sae-features-are-specific-to-negation"),
             ("4. Intervention", "what-changes-when-we-intervene"),
-            ("5. Geometry", "optional-geometry-view-how-representations-move-through-depth"),
-            ("6. Attention drill-down", "attention-drill-down"),
-            ("7. What to try next", "what-to-try-next"),
+            ("5. Geometry", "how-do-representations-move-through-depth"),
+            ("6. Attention", "attention-drill-down"),
+            ("7. Next steps", "what-to-try-next"),
         ]:
             st.markdown(f"- [{label}](#{anchor})")
 
@@ -445,23 +523,225 @@ def _load_artifacts_or_error(st: Any, artifact_dir: Path) -> dict | None:
         return None
 
 
-def _render_guided_summary(st: Any, artifacts: dict) -> None:
+def _set_density_mode(st: Any, mode: str) -> None:
+    if mode not in {"scroll", "grid"}:
+        raise ValueError(f"Unknown density mode: {mode}")
+    st.markdown(
+        f'<div id="mil-density-mode" data-mode="{mode}"></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _render_guided_summary(st: Any, artifacts: dict, *, compact: bool = False) -> None:
+    """Render the four key-metric summary row.
+
+    Parameters
+    ----------
+    compact:
+        When True, renders custom mini metric cards (zero extra padding) instead
+        of native ``st.metric`` widgets.  Use in grid/dashboard mode.
+    """
+    from mil.app_style import mini_metrics
+
     behavior_rows = artifacts["behavior_logits"]["variants"]
     negated = behavior_rows[0]
     patch_rows = artifacts["patch_summary"]["rows"]
     report = artifacts["patch_summary"]["control_report"]
     feature_rows = artifacts.get("feature_specificity", {}).get("rows", [])
-    candidate_count = len([row for row in feature_rows if row.get("kind") == "candidate"])
-    cols = st.columns(4)
-    cols[0].metric("Negated margin", f"{negated['margin']:.3f}")
-    cols[1].metric("Ablation delta", f"{patch_rows[0]['delta']:.3f}")
-    cols[2].metric(
-        "Control ratio",
-        f"{report['ratio']:.3f}",
-        delta="FLAGGED" if report["flagged"] else "below threshold",
-        delta_color="inverse" if report["flagged"] else "normal",
+    candidate_count = len([r for r in feature_rows if r.get("kind") == "candidate"])
+
+    if compact:
+        mini_metrics(
+            st,
+            [
+                {"label": "Negated margin", "value": f"{negated['margin']:.3f}"},
+                {"label": "Ablation delta", "value": f"{patch_rows[0]['delta']:.3f}"},
+                {
+                    "label": "Control ratio",
+                    "value": f"{report['ratio']:.3f}",
+                    "delta": "FLAGGED" if report["flagged"] else "below threshold",
+                    "delta_bad": report["flagged"],
+                },
+                {"label": "SAE candidates", "value": str(candidate_count)},
+            ],
+        )
+    else:
+        cols = st.columns(4, gap="small")
+        cols[0].metric("Negated margin", f"{negated['margin']:.3f}")
+        cols[1].metric("Ablation delta", f"{patch_rows[0]['delta']:.3f}")
+        cols[2].metric(
+            "Control ratio",
+            f"{report['ratio']:.3f}",
+            delta="FLAGGED" if report["flagged"] else "below threshold",
+            delta_color="inverse" if report["flagged"] else "normal",
+        )
+        cols[3].metric("SAE candidates", str(candidate_count))
+
+
+def _render_feature_extraction_strip(st: Any, artifacts: dict) -> None:
+    """Compact educational strip showing SAE feature separation summary."""
+    if "feature_specificity" not in artifacts:
+        return
+
+    summary = _feature_strip_summary(artifacts["feature_specificity"])
+    st.markdown(
+        f"""
+        <div class="mil-feature-strip">
+          <div>
+            <div class="mil-strip-label">Top candidate feature</div>
+            <div class="mil-strip-main">feature {summary["best_feature_id"]}</div>
+          </div>
+          <div>
+            <div class="mil-strip-label">Candidate contrast</div>
+            <div class="mil-strip-value">{summary["best_contrast"]}</div>
+          </div>
+          <div>
+            <div class="mil-strip-label">Max density-control contrast</div>
+            <div class="mil-strip-value">{summary["control_max"]}</div>
+          </div>
+          <div class="mil-strip-note">
+            Candidate SAE features should separate negated and paraphrased-negation
+            prompts from non-negated controls and decoys.  A large gap between
+            candidate contrast and control contrast suggests specificity.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    cols[3].metric("SAE candidates", str(candidate_count))
+
+
+def _hairline(st: Any) -> None:
+    """Render a thin 1px divider line."""
+    st.markdown('<div class="mil-hairline"></div>', unsafe_allow_html=True)
+
+
+# ---------------------------------------------------------------------------
+# Data helpers (testable without Streamlit)
+# ---------------------------------------------------------------------------
+
+
+def _feature_strip_summary(feature_specificity: dict) -> dict[str, str]:
+    """Summarize feature specificity data for the extraction strip.
+
+    Returns a dict with string values ready for display:
+    ``best_feature_id``, ``best_contrast``, ``control_max``.
+    """
+    rows = feature_specificity.get("rows", [])
+    candidates = [r for r in rows if r.get("kind") == "candidate"]
+    controls = [r for r in rows if r.get("kind") != "candidate"]
+    best = max(candidates, key=lambda r: r["contrast"]) if candidates else None
+    control_max = max((abs(r["contrast"]) for r in controls), default=0.0)
+    return {
+        "best_feature_id": str(best["feature_id"]) if best else "—",
+        "best_contrast": f"{best['contrast']:.2f}" if best else "—",
+        "control_max": f"{control_max:.2f}",
+    }
+
+
+def _behavior_table_rows(behavior: dict) -> list[dict]:
+    """Return compact display rows for the behavior logit table."""
+    return [
+        {
+            "variant": row["label"],
+            "target": row["target_token"],
+            "foil": row["foil_token"],
+            "margin": round(row["margin"], 3),
+        }
+        for row in behavior["variants"]
+    ]
+
+
+def _prompt_family_rows(prompt_family: dict) -> list[dict]:
+    """Return compact display rows for the prompt family table."""
+    return [
+        {
+            "variant": row["label"],
+            "role": row.get("role", ""),
+            "target": row.get("target_token", ""),
+            "foil": row.get("foil_token", ""),
+            "prompt": row["prompt"],
+        }
+        for row in prompt_family["variants"]
+    ]
+
+
+def _compact_plotly(fig: Any, *, height: int = 280, title: str | None = None) -> Any:
+    """Apply compact chart sizing for scroll-narrative mode.
+
+    Does *not* change colors or data — only height/margins/font.
+    """
+    updates: dict[str, Any] = dict(
+        height=height,
+        margin={"l": 36, "r": 18, "t": 36, "b": 36},
+        font={"family": "Inter, ui-sans-serif, sans-serif", "size": 10, "color": "#e5e7eb"},
+        title_font={"size": 12, "color": "#e5e7eb"},
+        legend={
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+            "font": {"size": 9},
+        },
+    )
+    if title is not None:
+        updates["title"] = title
+    fig.update_layout(**updates)
+    fig.update_xaxes(
+        tickfont=dict(color="#94a3b8"),
+        title_font=dict(color="#94a3b8"),
+    )
+    fig.update_yaxes(
+        tickfont=dict(color="#94a3b8"),
+        title_font=dict(color="#94a3b8"),
+    )
+    return fig
+
+
+def _grid_fig(fig: Any, *, height: int = 215) -> Any:
+    """Ultra-tight Plotly layout for dashboard grid cells."""
+    fig.update_layout(
+        height=height,
+        margin=dict(l=28, r=8, t=26, b=26),
+        font=dict(family="Inter, ui-sans-serif, sans-serif", size=9, color="#e5e7eb"),
+        title_font=dict(size=11, color="#e5e7eb"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.01,
+            xanchor="right",
+            x=1,
+            font=dict(size=8),
+        ),
+    )
+    fig.update_xaxes(
+        tickfont=dict(size=8, color="#94a3b8"),
+        title_font=dict(size=8, color="#94a3b8"),
+    )
+    fig.update_yaxes(
+        tickfont=dict(size=8, color="#94a3b8"),
+        title_font=dict(size=8, color="#94a3b8"),
+    )
+    return fig
+
+
+def _grid_heatmap_fig(fig: Any, *, height: int = 215) -> Any:
+    """Ultra-tight Plotly layout for heatmaps in dashboard grid."""
+    fig.update_layout(
+        height=height,
+        margin=dict(l=28, r=8, t=26, b=40),
+        font=dict(family="Inter, ui-sans-serif, sans-serif", size=9, color="#e5e7eb"),
+        title_font=dict(size=11, color="#e5e7eb"),
+    )
+    fig.update_xaxes(
+        tickfont=dict(size=7, color="#94a3b8"),
+        title_font=dict(size=8, color="#94a3b8"),
+    )
+    fig.update_yaxes(
+        tickfont=dict(size=8, color="#94a3b8"),
+        title_font=dict(size=8, color="#94a3b8"),
+    )
+    return fig
 
 
 # ---------------------------------------------------------------------------
@@ -565,8 +845,8 @@ def render_free_exploration(st: Any, components: Any) -> None:
             f"Control leakiness {status}: ratio {report.ratio:.3f}, "
             f"control max {report.control_max:.4f}, target mean {report.target_delta:.4f}"
         )
-        st.plotly_chart(patch_bar(result), use_container_width=True)
-        st.plotly_chart(token_deltas(result), use_container_width=True)
+        st.plotly_chart(patch_bar(result), width="stretch")
+        st.plotly_chart(token_deltas(result), width="stretch")
         st.plotly_chart(
             activation_heatmap(
                 st.session_state["hook_activations"],
@@ -574,7 +854,7 @@ def render_free_exploration(st: Any, components: Any) -> None:
                 prompt_index=0,
                 tokens=model._model.to_str_tokens(batch.target_prompts[0]),
             ),
-            use_container_width=True,
+            width="stretch",
         )
         with st.expander("PatchResult / ControlReport"):
             st.json(
@@ -594,7 +874,7 @@ def render_free_exploration(st: Any, components: Any) -> None:
         target_acts = get_activations(model, prompts=batch.target_prompts, hooks=[hook])
         control_acts = get_activations(model, prompts=batch.control_prompts, hooks=[hook])
         ranking = rank_features(sae, target_acts, control_acts, top_k=20)
-        st.plotly_chart(feature_table(ranking), use_container_width=True)
+        st.plotly_chart(feature_table(ranking), width="stretch")
 
 
 # ---------------------------------------------------------------------------
@@ -616,16 +896,22 @@ def _render_to_html(render: Any) -> str:
     return str(render)
 
 
-def _embed_html(components: Any, path: str | Path, *, height: int) -> None:
+def _embed_html(
+    components: Any,
+    path: str | Path,
+    *,
+    height: int,
+    scrolling: bool = False,
+) -> None:
     html = Path(path).read_text(encoding="utf-8")
-    components.html(html, height=height, scrolling=True)
+    components.html(html, height=height, scrolling=scrolling)
 
 
 def _require_streamlit():
     try:
         import streamlit as st
         import streamlit.components.v1 as components
-    except ImportError as exc:  # pragma: no cover - exercised by users without app extra.
+    except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "Streamlit is required. Install with: "
             "uv pip install --python .venv/bin/python -e '.[app]'"
