@@ -15,9 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+models = ["transformer-lens"]
 sae = ["sae-lens"]
 viz = ["circuitsvis", "plotly"]
 app = ["streamlit"]
+evidence = ["playwright"]
 wandb = ["wandb"]
 nnsight = ["nnsight"]
 dev = ["pytest", "ruff", "torch"]

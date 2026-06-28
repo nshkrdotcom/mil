@@ -14,7 +14,9 @@ class WandbBackend:
         try:
             import wandb
         except ImportError as e:
-            raise ImportError("Install with: pip install mil[wandb]") from e
+            raise ImportError(
+                "Install with: uv pip install --python .venv/bin/python -e '.[wandb]'"
+            ) from e
 
         self._wandb = wandb
         self._run = wandb.run or wandb.init(project=project)

@@ -69,7 +69,10 @@ def load_sae(release: str, sae_id: str, device: str | None = None) -> SAEHandle:
     try:
         from sae_lens import SAE
     except ImportError as e:
-        raise ImportError("SAELens is required. Install with: pip install mil[sae]") from e
+        raise ImportError(
+            "SAELens is required. Install with: "
+            "uv pip install --python .venv/bin/python -e '.[sae]'"
+        ) from e
     kwargs = {"device": device} if device is not None else {}
     loaded = SAE.from_pretrained(release=release, sae_id=sae_id, **kwargs)
     sae = loaded[0] if isinstance(loaded, tuple) else loaded

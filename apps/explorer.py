@@ -16,7 +16,10 @@ try:
     import streamlit as st
     import streamlit.components.v1 as components
 except ImportError as exc:  # pragma: no cover - exercised by users without app extra.
-    raise ImportError("Streamlit is required. Install with: pip install mil[app]") from exc
+    raise ImportError(
+        "Streamlit is required. Install with: "
+        "uv pip install --python .venv/bin/python -e '.[app]'"
+    ) from exc
 
 from mil.gpu import run_cuda_matmul_check
 from mil.prompt_data import (
@@ -150,7 +153,7 @@ try:
                 int(attention_head),
                 token_labels,
             ),
-            use_container_width=True,
+            width="stretch",
         )
 except Exception as exc:
     st.error(f"Attention failed: {type(exc).__name__}: {exc}")
@@ -198,7 +201,7 @@ if "patch_result" in st.session_state:
             f"Control leakiness {status}: ratio {report.ratio:.3f}, "
             f"control max {report.control_max:.4f}, target mean {report.target_delta:.4f}"
         )
-    st.plotly_chart(patch_bar(result), use_container_width=True)
+    st.plotly_chart(patch_bar(result), width="stretch")
     with st.expander("PatchResult / ControlReport"):
         st.json(
             {
@@ -222,7 +225,7 @@ elif st.button("Rank SAE features"):
             target_acts = get_activations(model, prompts=batch.target_prompts, hooks=[hook])
             control_acts = get_activations(model, prompts=batch.control_prompts, hooks=[hook])
             ranking = rank_features(sae, target_acts, control_acts, top_k=20)
-        st.plotly_chart(feature_table(ranking), use_container_width=True)
+        st.plotly_chart(feature_table(ranking), width="stretch")
         st.plotly_chart(
             activation_heatmap(
                 target_acts,
@@ -232,14 +235,14 @@ elif st.button("Rank SAE features"):
                 sae=sae,
                 max_features=12,
             ),
-            use_container_width=True,
+            width="stretch",
         )
     except Exception as exc:
         st.error(f"SAE feature ranking failed: {type(exc).__name__}: {exc}")
 
 st.header("Token Effects")
 if "patch_result" in st.session_state:
-    st.plotly_chart(token_deltas(st.session_state["patch_result"]), use_container_width=True)
+    st.plotly_chart(token_deltas(st.session_state["patch_result"]), width="stretch")
 else:
     st.caption("Run patch to populate token effects.")
 
@@ -252,7 +255,7 @@ if "hook_activations" in st.session_state:
             prompt_index=0,
             tokens=model._model.to_str_tokens(batch.target_prompts[0]),
         ),
-        use_container_width=True,
+        width="stretch",
     )
 else:
     st.caption("Run patch to populate hook activations.")

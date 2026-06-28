@@ -14,7 +14,10 @@ def _require(package: str) -> None:
     try:
         __import__(package)
     except ImportError as e:
-        raise ImportError(f"{package} is required. Install with: pip install mil[viz]") from e
+        raise ImportError(
+            f"{package} is required. Install with: "
+            "uv pip install --python .venv/bin/python -e '.[viz]'"
+        ) from e
 
 
 def attention(

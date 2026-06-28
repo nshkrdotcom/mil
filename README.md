@@ -31,37 +31,50 @@ dashboards, or automatic tensor serialization.
 
 ## Running the explorer (Ubuntu 24 / WSL2, RTX 5060 Ti)
 
-Install a Blackwell-compatible PyTorch build from a CUDA wheel index, not the
-default pip index. At the time this was tested, the CUDA 12.8 index worked:
+Requirement: `uv` must be installed and on `PATH`. Do not use the system Python
+installer on Ubuntu 24; it is externally managed and will reject global package
+installs.
 
 ```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+uv --version
 ```
 
-This may change as PyTorch ships newer stable sm_120 support. Check
-https://pytorch.org/get-started/locally/ for the current CUDA 12.x recommendation
-before trusting a hardcoded wheel index long-term.
-
-Install the app/viz/model dependencies in the environment you will run from:
+Create a dedicated `.venv`, install the model/app/viz/SAE/evidence dependencies,
+install Playwright's browser binary, and run the GPU kernel gate:
 
 ```bash
-pip install -e ".[app,viz,sae]" transformer-lens
+./scripts/bootstrap_uv.sh
 ```
 
-Run the GPU check again after installing these packages. If the resolver replaced
-the CUDA torch build, reinstall torch from the CUDA wheel index and rerun the
-check before starting the explorer.
-
-Verify CUDA kernels before loading models:
+That script expands to:
 
 ```bash
-python scripts/gpu_check.py
+uv venv --python 3.12 --allow-existing .venv
+uv pip install --python .venv/bin/python --torch-backend cu128 --exact -e ".[models,app,viz,sae,evidence,dev]"
+.venv/bin/python -m playwright install chromium
+.venv/bin/python scripts/gpu_check.py
+```
+
+The `--exact` flag is intentional: this is a dedicated environment, and exact
+sync prevents stale packages from surviving. In particular, this path does not
+install `torchaudio`; a mismatched leftover `torchaudio` wheel can break
+`transformers` imports.
+
+The documented backend is `cu128` because it passed on the tested Blackwell
+RTX 5060 Ti (`sm_120`). This may change as PyTorch ships newer stable sm_120
+support. Check https://pytorch.org/get-started/locally/ for the current CUDA
+recommendation before changing `TORCH_BACKEND`.
+
+Run the real demo:
+
+```bash
+.venv/bin/python scripts/run_demo.py --device cuda --model-name pythia-70m --limit 8 --artifacts-dir artifacts
 ```
 
 Run the explorer bound to all interfaces:
 
 ```bash
-streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8501
+.venv/bin/streamlit run apps/explorer.py --server.address 0.0.0.0 --server.port 8501
 ```
 
 From the Windows browser, open:
@@ -80,9 +93,14 @@ Then open `http://<wsl-ip>:8501`.
 
 Troubleshooting:
 
-- If `nvidia-smi` works but `torch.cuda.is_available()` is false, check whether
-  `torch.__version__` ends in `+cpu` or `torch.version.cuda` is `None`. That is a
-  CPU-only torch install; reinstall from the CUDA wheel index above.
+- If you see `externally-managed-environment`, you ran the wrong installer path.
+  Use `uv` and the project `.venv`; do not install into Ubuntu's system Python.
+- If `nvidia-smi` works but `torch.cuda.is_available()` is false, or
+  `torch.__version__` ends in `+cpu`, rerun `./scripts/bootstrap_uv.sh` and do
+  not proceed until `.venv/bin/python scripts/gpu_check.py` passes.
+- If CUDA is visible but matmul fails with a kernel-image error, check the current
+  PyTorch CUDA backend recommendation and rerun the bootstrap with, for example,
+  `TORCH_BACKEND=cu129 ./scripts/bootstrap_uv.sh`.
 - If CUDA is visible in WSL generally but not to one application, make sure that
-  application is using the same virtualenv/interpreter that passed
+  application is using the same `.venv` interpreter that passed
   `scripts/gpu_check.py`.

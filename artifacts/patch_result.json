@@ -1,146 +1,146 @@
 {
   "control_deltas": [
-    -1.505732536315918,
-    -2.062851905822754,
-    0.33937740325927734,
-    -3.2503862380981445,
-    -1.536585807800293,
-    -2.513181686401367,
-    -0.9019899368286133,
-    -2.1425294876098633
+    -1.5059051513671875,
+    -2.0627212524414062,
+    0.3390922546386719,
+    -3.2503719329833984,
+    -1.5366649627685547,
+    -2.5131359100341797,
+    -0.9018230438232422,
+    -2.1424942016601562
   ],
-  "control_mean": -1.6967350244522095,
+  "control_mean": -1.6967530250549316,
   "hook": "blocks.2.hook_resid_post",
   "metric": "logit_diff_delta",
   "mode": "ablation",
   "target_deltas": [
-    1.116805076599121,
-    1.299546241760254,
-    -0.3820314407348633,
-    2.335148811340332,
-    1.570969581604004,
-    2.3678693771362305,
-    0.7125329971313477,
-    1.1319799423217773
+    1.1167478561401367,
+    1.2995634078979492,
+    -0.38237667083740234,
+    2.3350210189819336,
+    1.5709218978881836,
+    2.3680028915405273,
+    0.7123899459838867,
+    1.1320981979370117
   ],
-  "target_mean": 1.2691025733947754,
+  "target_mean": 1.2690460681915283,
   "token_deltas": [
     {
-      "delta": 59.12715148925781,
+      "delta": 59.12720489501953,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 101
     },
     {
-      "delta": 58.439720153808594,
+      "delta": 58.439727783203125,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 97
     },
     {
-      "delta": 57.92962646484375,
+      "delta": 57.92963409423828,
       "direction": "positive",
       "token": "\ufffd\ufffd",
       "token_id": 44140
     },
     {
-      "delta": 57.21588897705078,
+      "delta": 57.215843200683594,
       "direction": "positive",
       "token": "\ufffd\ufffd",
       "token_id": 8318
     },
     {
-      "delta": 56.96025848388672,
+      "delta": 56.96033477783203,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 233
     },
     {
-      "delta": 56.58726501464844,
+      "delta": 56.58710479736328,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 100
     },
     {
-      "delta": 55.652610778808594,
+      "delta": 55.65265655517578,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 234
     },
     {
-      "delta": 55.347694396972656,
+      "delta": 55.34783935546875,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 114
     },
     {
-      "delta": 55.30510711669922,
+      "delta": 55.305015563964844,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 99
     },
     {
-      "delta": 55.08271789550781,
+      "delta": 55.08283233642578,
       "direction": "positive",
       "token": "\ufffd",
       "token_id": 216
     },
     {
-      "delta": -21.18157386779785,
+      "delta": -21.181385040283203,
       "direction": "negative",
       "token": ":`",
       "token_id": 30337
     },
     {
-      "delta": -20.09361457824707,
+      "delta": -20.093544006347656,
       "direction": "negative",
       "token": " his",
       "token_id": 521
     },
     {
-      "delta": -19.074026107788086,
+      "delta": -19.073925018310547,
       "direction": "negative",
       "token": "'\">",
       "token_id": 46768
     },
     {
-      "delta": -19.015546798706055,
+      "delta": -19.01547622680664,
       "direction": "negative",
       "token": ":&",
       "token_id": 44662
     },
     {
-      "delta": -18.26312828063965,
+      "delta": -18.262971878051758,
       "direction": "negative",
       "token": "\n\u00a0\u00a0",
       "token_id": 39318
     },
     {
-      "delta": -18.250436782836914,
+      "delta": -18.25039291381836,
       "direction": "negative",
       "token": "iei",
       "token_id": 44710
     },
     {
-      "delta": -18.151241302490234,
+      "delta": -18.151182174682617,
       "direction": "negative",
       "token": ":*",
       "token_id": 27506
     },
     {
-      "delta": -17.970794677734375,
+      "delta": -17.970722198486328,
       "direction": "negative",
       "token": " her",
       "token_id": 617
     },
     {
-      "delta": -17.93769073486328,
+      "delta": -17.937843322753906,
       "direction": "negative",
       "token": "---|---",
       "token_id": 20782
     },
     {
-      "delta": -17.863788604736328,
+      "delta": -17.863815307617188,
       "direction": "negative",
       "token": "noreply",
       "token_id": 46352

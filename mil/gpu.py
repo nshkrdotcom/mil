@@ -10,6 +10,7 @@ from typing import Any
 
 
 PYTORCH_CU12X_INDEX_URL = "https://download.pytorch.org/whl/cu128"
+PYTORCH_UV_BACKEND = "cu128"
 MATMUL_SLOW_THRESHOLD_MS = 500.0
 
 
@@ -25,10 +26,11 @@ class GpuCheckResult:
 def blackwell_torch_remediation() -> str:
     return (
         "Remediation: reinstall PyTorch from the CUDA 12.8 wheel index rather than "
-        f"the default pip index, for example:\n"
-        f"  pip install torch torchvision torchaudio --index-url {PYTORCH_CU12X_INDEX_URL}\n"
+        "the default package index, for example:\n"
+        "  uv pip install --python .venv/bin/python "
+        f"--torch-backend {PYTORCH_UV_BACKEND} torch torchvision\n"
         "Check https://pytorch.org/get-started/locally/ for the current CUDA 12.x "
-        "wheel index before trusting this hardcoded URL long-term."
+        f"wheel index before trusting {PYTORCH_CU12X_INDEX_URL} long-term."
     )
 
 
